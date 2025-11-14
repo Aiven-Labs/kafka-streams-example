@@ -16,13 +16,18 @@ repositories {
 }
 
 dependencies {
+   implementation 'org.apache.kafka:kafka-streams:3.4.0'
+   implementation 'org.apache.kafka:kafka-clients:3.4.0'
+   implementation 'org.slf4j:slf4j-api:2.0.5'
+   implementation 'org.slf4j:slf4j-simple:2.0.5'
+
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // This dependency is used by the application.
-    implementation libs.guava
+//    implementation libs.guava
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -34,7 +39,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'org.example.App'
+    mainClass = 'org.example.WordCountApp'
 }
 
 tasks.named('test') {
@@ -46,8 +51,10 @@ tasks.register('uberJar', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
-        attributes 'Main-Class': 'org.example.App'
+        attributes 'Main-Class': 'org.example.WordCountApp'
     }
+
+    archiveBaseName = 'WordCountApp';
 
     from sourceSets.main.output
 
