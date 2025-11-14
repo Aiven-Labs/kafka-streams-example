@@ -10,39 +10,23 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
-
-class ConfigManager {
-    private static Properties properties = new Properties();
-
-    static {
-        // For the moment, let's use a full path to the .env file. This obviously won't work when
-        // it's run in a different context, but I can work out how to do that later on.
-        try (InputStream input = new FileInputStream(
-                "/Users/tony.ibbs/sw/aiven/project-celtic/kafka-streams-in-celtic/datacamp-tutorial/.env"
-        )) {
-            properties.load(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load .env file", e);
-        }
-    }
-
-    public static String get(String key) {
-        return properties.getProperty(key);
-    }
-}
 
 public class WordCountApp {
 
    public static void main(String[] args) {
+
+       System.out.println("Arguments:");
+       System.out.println(System.getProperty("KAFKA_SERVICE_URI"));
+       System.out.println(System.getProperty("SSL_TRUSTSTORE_LOCATION"));
+       System.out.println(System.getProperty("SSL_KEYSTORE_LOCATION"));
+       System.out.println(System.getProperty("PASSWORD_FOR_STORE"));
+
        // 1. Create Kafka Streams configuration
        Properties config = new Properties();
        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-application");
-       config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, ConfigManager.get("KAFKA_SERVICE_URI"));
+       config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, System.getProperty("KAFKA_SERVICE_URI"));
        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
@@ -50,11 +34,11 @@ public class WordCountApp {
        // a. These settings must match the security settings of the secure Kafka cluster.
        // b. The SSL trust store and key store files must be locally accessible to the application.
        config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
-       config.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, ConfigManager.get("SSL_TRUSTSTORE_LOCATION"));
-       config.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, ConfigManager.get("SSL_TRUSTSTORE_PASSWORD"));
-       config.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, ConfigManager.get("SSL_KEYSTORE_LOCATION"));
-       config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, ConfigManager.get("SSL_KEYSTORE_PASSWORD"));
-       config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, ConfigManager.get("SSL_KEY_PASSWORD"));
+       config.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, System.getProperty("SSL_TRUSTSTORE_LOCATION"));
+       config.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, System.getProperty("PASSWORD_FOR_STORE"));
+       config.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, System.getProperty("SSL_KEYSTORE_LOCATION"));
+       config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, System.getProperty("PASSWORD_FOR_STORE"));
+       config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, System.getProperty("PASSWORD_FOR_STORE"));
 
        // 2. Create a StreamsBuilder - the factory for all stream operations
        StreamsBuilder builder = new StreamsBuilder();
@@ -86,6 +70,6 @@ public class WordCountApp {
        streams.start();
 
        // Print the topology description
-       System.out.println(streams.toString());
+       System.out.println(streams);
    }
 }
