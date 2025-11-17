@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 # We're going to need the following environment variables as input
 #
@@ -10,7 +10,6 @@
 echo "SETTING UP certs DIRECTORY"
 # Start with the certificate files
 mkdir -p certs
-rm certs/*
 # We need the double quotes to preserve the newlines :)
 echo "$CA_PEM_CONTENTS" > certs/ca.pem
 echo "$SERVICE_CERT_CONTENTS"> certs/service.cert
