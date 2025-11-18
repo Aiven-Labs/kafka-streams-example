@@ -21,21 +21,21 @@ export PASSWORD_FOR_STORE=`openssl rand -base64 10`
 # Generate the key store
 echo "GENERATING KEY STORE"
 openssl pkcs12 -export            \
-  -inkey certs/service.key        \
-  -in certs/service.cert          \
-  -out certs/client.keystore.p12  \
+  -inkey $PWD/certs/service.key        \
+  -in $PWD/certs/service.cert          \
+  -out $PWD/certs/client.keystore.p12  \
   -password pass:$PASSWORD_FOR_STORE   \
   -name service_key
 
 # and the trust store
 echo "GENERATING TRUST STORE"
 keytool -import                    \
-  -file certs/ca.pem               \
+  -file $PWD/certs/ca.pem               \
   -alias CA                        \
   -keypass $PASSWORD_FOR_STORE     \
   -storepass $PASSWORD_FOR_STORE   \
   -noprompt                        \
-  -keystore certs/client.truststore.jks
+  -keystore $PWD/certs/client.truststore.jks
 
 echo "RUNNING PROGRAM"
 exec java \
