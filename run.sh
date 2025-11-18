@@ -10,11 +10,11 @@
 echo "SETTING UP certs DIRECTORY"
 # Start with the certificate files
 mkdir -p certs
-# We need the double quotes to preserve the newlines :)
-IFS=''
-echo "$CA_PEM_CONTENTS" > certs/ca.pem
-echo "$SERVICE_CERT_CONTENTS" > certs/service.cert
-echo "$SERVICE_KEY_CONTENTS" > certs/service.key
+# We're not sure if the environment variable will have newline or
+# spaces separating "lines", so try to cope with either
+echo "$CA_PEM_CONTENTS" | tr '\n' ' ' | tr ' ' '\n' > certs/ca.pem
+echo "$SERVICE_CERT_CONTENTS" | tr '\n' ' ' | tr ' ' '\n' > certs/service.cert
+echo "$SERVICE_KEY_CONTENTS" | tr '\n' ' ' | tr ' ' '\n' > certs/service.key
 
 echo "ls -l certs"
 ls -l certs
@@ -22,6 +22,14 @@ ls -l certs
 echo "SERVICE KEY FILE"
 echo "vvvvvvvvvvvvvvvvvv"
 cat certs/service.key
+echo "^^^^^^^^^^^^^^^^^^"
+echo "SERVICE CERT FILE"
+echo "vvvvvvvvvvvvvvvvvv"
+cat certs/service.cert
+echo "^^^^^^^^^^^^^^^^^^"
+echo "CA PEM FILE"
+echo "vvvvvvvvvvvvvvvvvv"
+cat certs/ca.pem
 echo "^^^^^^^^^^^^^^^^^^"
 
 # Generate a random password for our stores
