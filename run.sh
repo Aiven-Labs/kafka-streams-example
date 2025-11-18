@@ -38,9 +38,11 @@ keytool -import                    \
   -keystore certs/client.truststore.jks
 
 echo "RUNNING PROGRAM"
-java \
+exec java \
+    -cp '$JAVA_HOME/lib/*' \
     -DKAFKA_SERVICE_URI=$KAFKA_SERVICE_URI                     \
     -DSSL_TRUSTSTORE_LOCATION=$PWD/certs/client.truststore.jks \
     -DSSL_KEYSTORE_LOCATION=$PWD/certs/client.keystore.p12     \
     -DPASSWORD_FOR_STORE=$PASSWORD_FOR_STORE                   \
-    -jar ./WordCountApp-uber.jar
+    -jar ./WordCountApp-uber.jar \
+    com.example.WordCountApp "$@"

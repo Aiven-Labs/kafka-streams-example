@@ -47,6 +47,11 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+task copyDependencies(type: Copy) {
+    from(sourceSets.main.runtimeClasspath)
+    into('libs')
+}
+
 tasks.register('uberJar', Jar) {
     archiveClassifier = 'uber'
 
