@@ -12,8 +12,11 @@ echo "SETTING UP certs DIRECTORY"
 mkdir -p certs
 # We need the double quotes to preserve the newlines :)
 echo "$CA_PEM_CONTENTS" > certs/ca.pem
-echo "$SERVICE_CERT_CONTENTS"> certs/service.cert
+echo "$SERVICE_CERT_CONTENTS" > certs/service.cert
 echo "$SERVICE_KEY_CONTENTS" > certs/service.key
+
+echo "ls -l certs"
+ls -l certs
 
 # Generate a random password for our stores
 export PASSWORD_FOR_STORE=`openssl rand -base64 10`
