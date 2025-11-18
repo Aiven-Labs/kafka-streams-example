@@ -18,6 +18,11 @@ echo "$SERVICE_KEY_CONTENTS" > certs/service.key
 echo "ls -l certs"
 ls -l certs
 
+echo "SERVICE KEY FILE"
+echo "vvvvvvvvvvvvvvvvvv"
+cat certs/service.key
+echo "^^^^^^^^^^^^^^^^^^"
+
 # Generate a random password for our stores
 export PASSWORD_FOR_STORE=`openssl rand -base64 10`
 
