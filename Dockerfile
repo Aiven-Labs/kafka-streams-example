@@ -14,7 +14,13 @@ COPY run.sh ./
 RUN mkdir temp && cd temp && jar xf ../$FAT_JAR_NAME
 # And find out what depedencies it lacks - this tells us what we need from
 # the external Java environment
-RUN jdeps --print-module-deps --ignore-missing-deps --recursive --multi-release 17 --class-path="./temp/BOOT-INF/lib/*" --module-path="./temp/BOOT-INF/lib/*" ./$FAT_JAR_NAME > modules.txt
+RUN jdeps --print-module-deps \
+    --ignore-missing-deps \
+    --recursive \
+    --multi-release 17 \
+    --class-path="./temp/BOOT-INF/lib/*" \
+    --module-path="./temp/BOOT-INF/lib/*" \
+    ./$FAT_JAR_NAME > modules.txt
 
 # Now assemble our own custom JRE with only those things in it
 RUN $JAVA_HOME/bin/jlink \
@@ -23,7 +29,7 @@ RUN $JAVA_HOME/bin/jlink \
     --strip-debug \
     --no-man-pages \
     --no-header-files \
-    --compress=2 \
+    --compress=zip-6 \
     --output ./custom-jre
 
 # ----------------------------------------------------------------------------
@@ -40,7 +46,7 @@ WORKDIR /app
 ##    rm -rf /var/cache/apk/*
 RUN apt-get update \
     && apt-get install -y openssl \
-    && apt-get install -y librocksdb-dev
+    && apt-get install -y librocksdb7.8
 
 RUN apt-get autoremove -y \
     && apt-get clean -y \
