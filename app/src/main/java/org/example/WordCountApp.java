@@ -16,13 +16,6 @@ import java.util.Properties;
 public class WordCountApp {
 
    public static void main(String[] args) {
-
-       System.out.println("Arguments:");
-       System.out.println(System.getProperty("KAFKA_SERVICE_URI"));
-       System.out.println(System.getProperty("SSL_TRUSTSTORE_LOCATION"));
-       System.out.println(System.getProperty("SSL_KEYSTORE_LOCATION"));
-       System.out.println(System.getProperty("PASSWORD_FOR_STORE"));
-
        // 1. Create Kafka Streams configuration
        Properties config = new Properties();
        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-application");

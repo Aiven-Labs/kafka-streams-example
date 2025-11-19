@@ -7,7 +7,7 @@
 # - SERVICE_CERT_CONTENTS - the contents of the service.cert file
 # - SERVICE_KEY_CONTENTS - the contents of the service.key file
 
-echo "SETTING UP certs DIRECTORY"
+echo "SET UP THE certs DIRECTORY"
 # Start with the certificate files
 mkdir -p certs
 
@@ -35,24 +35,10 @@ normalise_cert_to_file "$CA_PEM_CONTENTS" "CERTIFICATE" certs/ca.pem
 normalise_cert_to_file "$SERVICE_CERT_CONTENTS" "CERTIFICATE" certs/service.cert
 normalise_cert_to_file "$SERVICE_KEY_CONTENTS" "PRIVATE KEY" certs/service.key
 
-echo "SERVICE KEY FILE"
-echo "vvvvvvvvvvvvvvvvvv"
-cat certs/service.key
-echo "^^^^^^^^^^^^^^^^^^"
-echo "SERVICE CERT FILE"
-echo "vvvvvvvvvvvvvvvvvv"
-cat certs/service.cert
-echo "^^^^^^^^^^^^^^^^^^"
-echo "CA PEM FILE"
-echo "vvvvvvvvvvvvvvvvvv"
-cat certs/ca.pem
-echo "^^^^^^^^^^^^^^^^^^"
-
 # Generate a random password for our stores
 export PASSWORD_FOR_STORE=`openssl rand -base64 10`
 
-# Generate the key store
-echo "GENERATING KEY STORE"
+echo "GENERATE THE KEY STORE"
 openssl pkcs12 -export            \
   -inkey $PWD/certs/service.key        \
   -in $PWD/certs/service.cert          \
@@ -61,7 +47,7 @@ openssl pkcs12 -export            \
   -name service_key
 
 # and the trust store
-echo "GENERATING TRUST STORE"
+echo "GENERATE THE TRUST STORE"
 keytool -import                    \
   -file $PWD/certs/ca.pem               \
   -alias CA                        \
@@ -70,7 +56,7 @@ keytool -import                    \
   -noprompt                        \
   -keystore $PWD/certs/client.truststore.jks
 
-echo "RUNNING PROGRAM"
+echo "RUN THE PROGRAM"
 exec java \
     -cp '$JAVA_HOME/lib/*' \
     -DKAFKA_SERVICE_URI=$KAFKA_SERVICE_URI                     \
