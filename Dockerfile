@@ -4,7 +4,7 @@ FROM eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
 
-ENV FAT_JAR_NAME=WordCountApp-uber.jar
+ENV FAT_JAR_NAME=FilterApp-uber.jar
 
 # Start with our ("released") fat JAR and our run script
 COPY $FAT_JAR_NAME ./
@@ -55,7 +55,7 @@ RUN apt-get autoremove -y \
 
 # Copy the custom JRE and application artifacts from the builder stage
 COPY --from=builder /app/custom-jre /usr/lib/jvm/custom-jre
-COPY --from=builder /app/WordCountApp-uber.jar ./
+COPY --from=builder /app/FilterApp-uber.jar ./
 COPY --from=builder /app/run.sh ./
 
 ENV JAVA_HOME="/usr/lib/jvm/custom-jre"

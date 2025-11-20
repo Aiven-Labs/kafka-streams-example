@@ -63,5 +63,5 @@ exec java \
     -DSSL_TRUSTSTORE_LOCATION=$PWD/certs/client.truststore.jks \
     -DSSL_KEYSTORE_LOCATION=$PWD/certs/client.keystore.p12     \
     -DPASSWORD_FOR_STORE=$PASSWORD_FOR_STORE                   \
-    -jar ./WordCountApp-uber.jar \
-    com.example.WordCountApp "$@"
+    -jar ./FilterApp-uber.jar \
+    com.example.FilterApp "$@"
