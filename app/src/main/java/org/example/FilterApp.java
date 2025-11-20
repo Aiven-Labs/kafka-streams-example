@@ -71,7 +71,6 @@ public class FilterApp {
         // Start reading from the input topic
         final KStream<String, String> sourceStream = builder.stream(INPUT_TOPIC);
 
-        /*
         // Define the filtering logic using Gson
         final KStream<String, String> filteredStream = sourceStream.filter((key, jsonValue) -> {
             try {
@@ -107,8 +106,6 @@ public class FilterApp {
 
         // Write the filtered stream (Key=String, Value=JSON String) to the output topic
         filteredStream.to(OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
-         */
-        sourceStream.to(OUTPUT_TOPIC);
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());
