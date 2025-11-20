@@ -11,23 +11,27 @@ plugins {
 }
 
 repositories {
-    // Use Maven Central for resolving dependencies.
+    // Use Maven Central for resolving general dependencies.
     mavenCentral()
+    // Add Confluent dependencies for Schema Registry client and Avro Serdes
+    maven {
+        url "https://packages.confluent.io/maven/"
+    }
 }
 
 dependencies {
-   implementation 'org.apache.kafka:kafka-streams:3.4.0'
-   implementation 'org.apache.kafka:kafka-clients:3.4.0'
-   implementation 'org.slf4j:slf4j-api:2.0.5'
-   implementation 'org.slf4j:slf4j-simple:2.0.5'
+   implementation 'org.apache.kafka:kafka-streams:3.8.0'
+
+    // Gson for lightweight JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+   implementation 'org.slf4j:slf4j-api:2.0.13'
+   implementation 'org.slf4j:slf4j-simple:2.0.13'
 
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    // This dependency is used by the application.
-//    implementation libs.guava
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -39,7 +43,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'org.example.WordCountApp'
+    mainClass = 'org.example.FilterApp'
 }
 
 tasks.named('test') {
@@ -47,7 +51,8 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-task copyDependencies(type: Copy) {
+// Do we still need this?
+tasks.register('copyDependencies', Copy) {
     from(sourceSets.main.runtimeClasspath)
     into('libs')
 }
@@ -56,10 +61,10 @@ tasks.register('uberJar', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
-        attributes 'Main-Class': 'org.example.WordCountApp'
+        attributes 'Main-Class': 'org.example.FilterApp'
     }
 
-    archiveBaseName = 'WordCountApp';
+    archiveBaseName = 'FilterApp';
 
     from sourceSets.main.output
 
