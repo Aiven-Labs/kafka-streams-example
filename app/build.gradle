@@ -8,6 +8,15 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    // Plugin to generate Java source code from Avro schemas
+    id 'com.github.davidmc24.gradle.plugin.avro' version '1.9.1'
+}
+
+// We're targeting Java 21 as a "safe" choice
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
@@ -20,24 +29,33 @@ repositories {
 }
 
 dependencies {
-   implementation 'org.apache.kafka:kafka-streams:3.8.0'
+    // Kafka Streams Core
+    implementation 'org.apache.kafka:kafka-streams:3.7.0'
+
+    // Confluent Schema Registry Specific Avro Serdes
+    // This library integrates the Schema Registry client with Kafka Streams
+    implementation 'io.confluent:kafka-streams-avro-serde:8.1.0'
+
+    // Avro dependencies for runtime and the generated classes
+    implementation 'org.apache.avro:avro:1.11.3'
+
+    // Logging (using SLF4J and Log4j2 for compatibility and standard practice)
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+
+    // Testing dependencies (optional but recommended)
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
 
     // Gson for lightweight JSON parsing
-    implementation 'com.google.code.gson:gson:2.10.1'
-
-   implementation 'org.slf4j:slf4j-api:2.0.13'
-   implementation 'org.slf4j:slf4j-simple:2.0.13'
-
-    // Use JUnit Jupiter for testing.
-    testImplementation libs.junit.jupiter
-
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    //implementation 'com.google.code.gson:gson:2.10.1'
 }
 
-// Apply a specific Java toolchain to ease working on different environments.
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+sourceSets {
+    main {
+        resources {
+            srcDirs 'app/src/main/avro'
+        }
     }
 }
 
@@ -51,25 +69,16 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Do we still need this?
-tasks.register('copyDependencies', Copy) {
-    from(sourceSets.main.runtimeClasspath)
-    into('libs')
-}
-
 tasks.register('uberJar', Jar) {
     archiveClassifier = 'uber'
-
     manifest {
         attributes 'Main-Class': 'org.example.FilterApp'
     }
-
     archiveBaseName = 'FilterApp';
 
     from sourceSets.main.output
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
     dependsOn configurations.runtimeClasspath
     from {
         configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }

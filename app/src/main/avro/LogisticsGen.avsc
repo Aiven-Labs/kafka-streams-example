@@ -1,0 +1,77 @@
+{
+  "namespace": "data.gen.avro",
+  "name": "logistics",
+  "type": "record",
+  "fields": [
+    {
+      "name": "time_utc",
+      "type": {
+        "type": "long",
+        "examples": [
+          1747052327
+        ]
+      }
+    },
+    {
+      "name": "tracking_id",
+      "type": {
+        "type": "string",
+        "examples": "track-1974256721"
+      }
+    },
+    {
+      "name": "message",
+      "type": {
+        "type": "string",
+        "examples": [
+          "transfer"
+        ]
+      }
+    },
+    {
+      "name": "carrier",
+      "type": {
+        "type": "string",
+        "examples": [
+          "AN_POST",
+          "DHL",
+          "USPS",
+          "R_MAIL"
+        ]
+      }
+    },
+    {
+      "name": "manifest",
+      "type": {
+        "type": "array",
+        "items": "string"
+      }
+    },
+    {
+      "name": "next_hop_location",
+      "type": {
+        "type": "string",
+        "examples": [
+          "DUB",
+          "LON",
+          "BER",
+          "NYC",
+          "PIT",
+          "TOR",
+          "MAD"
+        ]
+      }
+    },
+    {
+      "name": "state",
+      "type": {
+        "type": "string",
+        "examples": [
+          "Received",
+          "Delivered"
+        ]
+      }
+    }
+  ]
+}
+
