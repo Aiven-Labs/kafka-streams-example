@@ -27,8 +27,8 @@ public class FilterApp {
     private static final String OUTPUT_TOPIC = "output-topic";
 
     // Define the key and value we are filtering on
-    private static final String TARGET_FIELD = "status";
-    private static final String TARGET_VALUE = "NEW";
+    private static final String TARGET_FIELD = "state";
+    private static final String TARGET_VALUE = "Delivered";
 
     public static void main(String[] args) {
         // Gather our `-D` arguments
