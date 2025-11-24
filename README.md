@@ -14,6 +14,8 @@ messages are not written to `output-topic`.
 It is designed to be run in a container - a `Dockerfile` and associated run
 script (`run.sh`) are provided.
 
+The project uses Gradle and Groovy for configuration.
+
 ## Command line arguments for the Java app
 
 The Java app takes the following arguments:
@@ -58,6 +60,27 @@ password generated with `openssl`. Note that this means that the password does
 not leave the container.
 
 Finally it runs the fat Java JAR with the necessary arguments.
+
+## Building the program
+
+For simplicity in the container file, we build a fat (uber) JAR. This means
+that all of non-standard dependencies are frozen into the final executable.
+
+Build the JAR file with
+```shell
+gradle uberJar
+```
+
+(See `app/build.gradle` for the definition of the `uberJar` task.)
+
+and copy the result to the top-level directory
+```shell
+cp app/build/libs/FilterApp-uber.jar .
+```
+
+For convenience there is already a `FilterApp-uber.jar` pre-built and
+committed to this repository - this means you can run the program without
+needing to build it.
 
 ## Running the container
 
@@ -126,11 +149,11 @@ rm -rf certs && ./run.sh
 
 ## End to end example using Aiven for Kafka
 
-It's possible to create an Aiven for Kafka service using our [web
+It's possible to do everything in this section using using the Aiven [web
 console](https://console.aiven.io/), but for documentation purposes here I
 shall use the `avn` command line tool.
 
-Since it's a Python tool, make sure you're in a virtual environment and
+Since `avn` is a Python tool, make sure you're in a virtual environment and
 download it:
 
 ```shell
