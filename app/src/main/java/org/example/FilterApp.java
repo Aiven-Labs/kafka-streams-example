@@ -1,6 +1,7 @@
 package org.example;
 
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -30,18 +31,17 @@ public class FilterApp {
     private static final String TARGET_FIELD = "state";
     private static final String TARGET_VALUE = "Delivered";
 
-    public static void main(String[] args) {
+    private static Properties setConfig() {
         // Gather our `-D` arguments
-        // -DKAFKA_SERVICE_URI=tibs-kafka-for-streams-251120-dev-sandbox.c.aivencloud.com:12693
-        //-DSSL_TRUSTSTORE_LOCATION=/Users/tony.ibbs/sw/aiven/project-celtic/kafka-streams-in-celtic/kafka-streams-example/certs/client.truststore.jks
-        //-DSSL_KEYSTORE_LOCATION=/Users/tony.ibbs/sw/aiven/project-celtic/kafka-streams-in-celtic/kafka-streams-example/certs/client.keystore.p12
-        //PASSWORD_FOR_STORE=not-a-good-password
-        String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI"); //, "tibs-kafka-for-streams-251120-dev-sandbox.c.aivencloud.com:12693");
-        String sslTruststoreLocation = System.getProperty("SSL_TRUSTSTORE_LOCATION"); //, "/Users/tony.ibbs/sw/aiven/project-celtic/kafka-streams-in-celtic/kafka-streams-example/certs/client.truststore.jks");
-        String sslKeystoreLocation = System.getProperty("SSL_KEYSTORE_LOCATION"); //, "/Users/tony.ibbs/sw/aiven/project-celtic/kafka-streams-in-celtic/kafka-streams-example/certs/client.keystore.p12");
-        String passwordForStore = System.getProperty("PASSWORD_FOR_STORE"); //, "not-a-good-password");
+        String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI");
+        String sslTruststoreLocation = System.getProperty("SSL_TRUSTSTORE_LOCATION");
+        String sslKeystoreLocation = System.getProperty("SSL_KEYSTORE_LOCATION");
+        String passwordForStore = System.getProperty("PASSWORD_FOR_STORE");
 
-        if (kafkaServiceUri == null || sslTruststoreLocation == null || sslKeystoreLocation == null || passwordForStore == null) {
+        if (kafkaServiceUri == null||
+                sslTruststoreLocation == null ||
+                sslKeystoreLocation == null ||
+                passwordForStore == null) {
             if (kafkaServiceUri == null) log.error("Missing value for -DKAFKA_SERVICE_URI");
             if (sslTruststoreLocation == null) log.error("Missing value for -DSSL_TRUSTSTORE_LOCATION");
             if (sslKeystoreLocation == null) log.error("Missing value for -DSSL_KEYSTORE_LOCATION");
@@ -52,6 +52,7 @@ public class FilterApp {
         Properties config = new Properties();
         config.put(StreamsConfig.APPLICATION_ID_CONFIG, "json-filter-application");
         config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServiceUri);
+
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
@@ -65,10 +66,18 @@ public class FilterApp {
         config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, passwordForStore);
         config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, passwordForStore);
 
-        // 2. Define the Streams Topology
+        // For a demo app, let's start at the beginning of the input topic
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        return config;
+    }
+
+
+    public static void main(String[] args) {
+        Properties config = setConfig();
+
         final StreamsBuilder builder = new StreamsBuilder();
 
-        // Start reading from the input topic
         final KStream<String, String> sourceStream = builder.stream(INPUT_TOPIC);
 
         // Define the filtering logic using Gson
@@ -109,7 +118,6 @@ public class FilterApp {
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());
-
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), config);
 
