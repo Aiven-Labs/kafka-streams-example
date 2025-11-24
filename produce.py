@@ -89,8 +89,8 @@ def main():
     )
     parser.add_argument(
         '-d', '--certs-dir', default=DEFAULT_CERTS_FOLDER, type=pathlib.Path,
-        help=f'directory containing the ca.pem, service.cert and service.key'
-             ' files, default "{DEFAULT_CERTS_FOLDER}"',
+        help='directory containing the ca.pem, service.cert and service.key'
+             f' files, default "{DEFAULT_CERTS_FOLDER}"',
     )
     parser.add_argument(
         '-t', '--topic', default=DEFAULT_TOPIC_NAME,
