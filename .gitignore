@@ -6,3 +6,6 @@ build
 
 # Any certificates directory from testing
 certs/
+
+# Python virtual environment
+venv/
