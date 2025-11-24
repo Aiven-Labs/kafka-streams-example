@@ -13,9 +13,11 @@ import org.apache.kafka.streams.kstream.Produced;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
+import org.apache.kafka.streams.kstream.ValueMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -28,8 +30,8 @@ public class FilterApp {
     private static final String OUTPUT_TOPIC = "output-topic";
 
     // Define the key and value we are filtering on
-    private static final String TARGET_FIELD = "state";
-    private static final String TARGET_VALUE = "Delivered";
+    private static final String FILTER_ON_FIELD = "state";
+    private static final String FILTER_ON_VALUE = "Delivered";
 
     private static Properties setConfig() {
         // Gather our `-D` arguments
@@ -66,12 +68,11 @@ public class FilterApp {
         config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, passwordForStore);
         config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, passwordForStore);
 
-        // For a demo app, let's start at the beginning of the input topic
+        // For this demo app, let's start at the beginning of the input topic
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         return config;
     }
-
 
     public static void main(String[] args) {
         Properties config = setConfig();
@@ -80,36 +81,48 @@ public class FilterApp {
 
         final KStream<String, String> sourceStream = builder.stream(INPUT_TOPIC);
 
-        // Define the filtering logic using Gson
-        final KStream<String, String> filteredStream = sourceStream.filter((key, jsonValue) -> {
-            try {
-                log.info("INSPECT: Key='{}', Value='{}'", key, jsonValue);
-                // Use Gson's JsonParser to safely parse the JSON string
-                JsonElement element = JsonParser.parseString(jsonValue);
+        final KStream<String, String> filteredStream = sourceStream.flatMapValues(new ValueMapper<String, Iterable<String>>() {
+            @Override
+            public Iterable<String> apply(String value){
+                log.info("FILTER JSON OBJECT: Value='{}'", value);
+                try {
+                    // Use Gson's JsonParser to safely parse the JSON string
+                    JsonElement element = JsonParser.parseString(value);
 
-                if (element.isJsonObject()) {
-                    JsonObject jsonObject = element.getAsJsonObject();
+                    if (!element.isJsonObject()) {
+                        log.info("IGNORE: NOT JSON OBJECT: Value='{}'", FILTER_ON_VALUE);
+                        return Collections.emptyList();
+                    }
+                } catch (Exception e) {
+                    // If parsing it as JSON (or anything else) failed, then drop it
+                    log.error("IGNORE: JSON PARSE FAILED: Value {}. Dropping message.", value, e);
+                    return Collections.emptyList();
+                }
 
-                    // Check if the object contains the target field
-                    if (jsonObject.has(TARGET_FIELD)) {
-                        JsonElement statusElement = jsonObject.get(TARGET_FIELD);
-
-                        // Check if the field is a String and matches the target value
-                        if (statusElement.isJsonPrimitive() && statusElement.getAsString().equals(TARGET_VALUE)) {
-                            log.info("ACCEPT: Key='{}', Status='{}'", key, TARGET_VALUE);
-                            return true; // Keep this message
-                        }
+                // Remove any messages where FILTER_ON_FIELD does not contain FILTER_ON_VALUE
+                log.info("FILTER: Value='{}'", value);
+                JsonElement element = JsonParser.parseString(value);
+                JsonObject inputObject = element.getAsJsonObject();
+                // Is the field we gate on present in this message?
+                if (inputObject.has(FILTER_ON_FIELD)) {
+                    JsonElement statusElement = inputObject.get(FILTER_ON_FIELD);
+                    if (!statusElement.isJsonPrimitive() || !statusElement.getAsString().equals(FILTER_ON_VALUE)) {
+                        log.info("IGNORE: Value='{}'", FILTER_ON_VALUE);
+                        return Collections.emptyList();
                     }
                 }
 
-                // If parsing failed, the field was missing, or the value didn't match, drop the message.
-                log.debug("DROP: Key='{}', Message did not meet criteria.", key);
-                return false;
-
-            } catch (Exception e) {
-                // Handle cases where the message is not valid JSON
-                log.error("Error parsing JSON with Gson for key: {}. Dropping message.", key, e);
-                return false;
+                // Only propagate some values: name, address, tracking_id and timestamp
+                // We don't bother with "state", since we already know it's "Delivered"
+                // We change the name of "tracking_id" to "trackingId"
+                // We'll accept that missing values get "sent on" as `null`
+                log.info("MAP VALUES: Value='{}'", value);
+                JsonObject outputObject = new JsonObject();
+                outputObject.add("name", inputObject.get("name"));
+                outputObject.add("address", inputObject.get("address"));
+                outputObject.add("trackingId", inputObject.get("tracking_id")); // Note the name change
+                outputObject.add("timestamp", inputObject.get("timestamp"));
+                return Collections.singleton(outputObject.toString());
             }
         });
 
@@ -132,8 +145,7 @@ public class FilterApp {
         });
 
         try {
-            // Clean up local state stores (useful for development/testing)
-            streams.cleanUp();
+            streams.cleanUp();  // Clean up local state stores (useful for development/testing)
             streams.start();
             latch.await();
         } catch (Throwable e) {

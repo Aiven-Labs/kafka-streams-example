@@ -3,13 +3,20 @@
 ## What this does
 
 This is an example program written in Java that uses Kafka Streams to filter
-JSON messages.
+and process JSON messages.
 
-It reads from `input-topic` and writes to `output-topic`, on the same Kafka
+It reads from `input-topic` and filters message to `output-topic`, on the same Kafka
 service.
 
-It only writes messages that have `state` set to `Delivered` - all other
-messages are not written to `output-topic`.
+* It ignores input messages that are not JSON, or are not JSON objects (`{...}`)
+* It ignores input messages where `state` is not set to `Delivered`
+* In the messages it writes to `output-topic`, it writes the following fields:
+  * `name`
+  * `address`
+  * `timestamp`
+  * `tracking_id`, but it uses the name `trackingId`
+* If any of those values are absent in the input message, they will be `null`
+  in the output message.
 
 It is designed to be run in a container - a `Dockerfile` and associated run
 script (`run.sh`) are provided.
