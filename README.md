@@ -22,6 +22,9 @@ generator for "Logistics" will write appropriate messages to the aforesaid
 `logistics_data_filtered` topic, so that's a good way of demonstrating that the
 program works.
 
+> **Note** There is an older version of this code for handling JSON messages
+> on the `json` branch.
+
 ## Command line arguments for the Java app
 
 The Java app takes the following arguments:
