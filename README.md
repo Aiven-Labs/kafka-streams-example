@@ -1,5 +1,8 @@
 # Kafka Streams example
 
+> **Note** This code is now on the `json` branch. The `main` branch has
+> support for Avro messages.
+
 ## What this does
 
 This is an example program written in Java that uses Kafka Streams to filter
