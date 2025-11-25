@@ -17,9 +17,9 @@ script (`run.sh`) are provided.
 
 The project uses Gradle and Groovy for configuration.
 
-If you're using an Aiven for Apache Kafka serfice, then the Sample data
+If you're using an Aiven for Apache Kafka service, then the Sample data
 generator for "Logistics" will write appropriate messages to the aforesaid
-`logistics_data_gen` topic, so that's a good way of demonstrating that the
+`logistics_data_filtered` topic, so that's a good way of demonstrating that the
 program works.
 
 ## Command line arguments for the Java app
@@ -31,6 +31,10 @@ The Java app takes the following arguments:
 * `-DSSL_KEYSTORE_LOCATION` - the directory containing the `client.keystore.p12` file
 * `-DPASSWORD_FOR_STORE` - the password used for those stores (this assumes
   the same password is used for both)
+* `-DSCHEMA_REGISTRY_URL` - the URL for the schema registry
+* `-DSCHEMA_REGISTRY_USERNAME` - the user name for accessing the schema
+  registry, typically `avnadmin` for Karapace
+* `-DSCHEMA_REGISTRY_PASSWORD` - the password for accessing the schema registry
 
 ## The container file and how it works
 
@@ -52,14 +56,20 @@ JAR itself, as well as the `run.sh` file, which it runs.
 
 ## The `run.sh` file
 
-The `run.sh` file assumes it has the following environment variabels as input:
+The `run.sh` file assumes it has the following environment variables as input:
 
 - `KAFKA_SERVICE_URI` - the URI of the Kafka service we're using
 - `CA_PEM_CONTENTS` - the contents of the `ca.pem` file
 - `SERVICE_CERT_CONTENTS` - the contents of the `service.cert` file
 - `SERVICE_KEY_CONTENTS` - the contents of the `service.key` file
+- `SCHEMA_REGISTRY_URL` - the URL for the schema registry
+- `SCHEMA_REGISTRY_USERNAME` - the user name for accessing the schema
+  registry. **This is optional** and if it is not given, a value of `avnadmin`
+  will be assumed
+- `SCHEMA_REGISTRY_PASSWORD` - the password for accessing the schema registry
 
-It puts the contents of the environemnt variables into files of the
+It puts the contents of the `CA_PEM_CONTENTS`, `SERVICE_CERT_CONTENTS` and
+`SERVICE_KEY_CONTENTS` environemnt variables into files of the
 appropriate name in a directory called `certs`. It then uses `openssl` to
 create a key store, and `keytool` to create a trust store. For both it uses a
 password generated with `openssl`. Note that this means that the password does
@@ -70,9 +80,10 @@ Finally it runs the fat Java JAR with the necessary arguments.
 ## Building the program
 
 For simplicity in the container file, we build a fat (uber) JAR. This means
-that all of non-standard dependencies are frozen into the final executable.
+that all of the programs non-standard dependencies (the ones not provided by
+the JRE) are frozen into the final executable.
 
-Build the JAR file with
+Build that fat JAR file with
 ```shell
 gradle uberJar
 ```
@@ -101,7 +112,7 @@ or in the Fish shell
 set -x KAFKA_SERVICE_URI <service uri>
 ```
 
-Do the same the schema registry URL and password (the program
+Do the same for the schema registry URL and password (the program
 defaults to the standard schema Karapace username of `avnadmin`, so we don't
 need to specify that).
 ```shell
@@ -147,19 +158,6 @@ that's not correct, add an appropriate `-e` switch - for instance:
         -e SCHEMA_REGISTRY_USERNAME=main \ 
 ```
 (obviously replacing `name` with the actual username).
-
-You can test by running the `produce.py` program, which generates random
-messages in a compatible form:
-```shell
-./produce.py -n 5
-```
-
-(try `./produce -h` for help on what it can do.)
-
-Check the messages are being sent with
-```shell
-kafkactl consume output-topic --from-beginning
-```
 
 ## Running `run.sh` locally
 
@@ -250,13 +248,13 @@ Once the Kafka service is running, create the two topics
 avn service topic-create    \
     --partitions 1          \
     --replication 2         \
-    $KAFKA_SERVICE_NAME input-topic
+    $KAFKA_SERVICE_NAME logistics_data_gen
 ```
 ```shell
 avn service topic-create    \
     --partitions 1          \
     --replication 2         \
-    $KAFKA_SERVICE_NAME output-topic
+    $KAFKA_SERVICE_NAME logistics_data_filtered
 ```
 
 Download the certification files (it will create the directory if necessary)
