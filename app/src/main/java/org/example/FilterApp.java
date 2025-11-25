@@ -129,7 +129,7 @@ public class FilterApp {
             public Iterable<logistics_delivered> apply(logistics inputValue){
                 log.info("LOOKING AT: Value='{}'", inputValue);
 
-                if (inputValue.getState().toString() != KEEP_STATE) {
+                if (!inputValue.getState().equals(KEEP_STATE)) {
                     log.info("IGNORING: because state is {}", inputValue.getState());
                     return Collections.emptyList();
                 }
