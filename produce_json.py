@@ -2,10 +2,6 @@
 # /// script
 # dependencies = ["faker", "dotenv", "kafka-python"]
 # ///
-
-# Why Python < 3.13? There seems to be a problem with Python's SSL context
-# being stricter at 3.13 and later, which means it doesn't like the Aiven
-# for Kafka certificates. I need to investigate this.
 #
 # As to that `script` block - see
 # https://packaging.python.org/en/latest/specifications/inline-script-metadata/#inline-script-metadata
@@ -13,7 +9,7 @@
 # The uv program understands it, and so `uv run --script` will run this file
 # and create a virtual environment for it on the fly.
 
-"""Generate fake logistics data
+"""Generate fake JSON logistics data 
 
 Install `uv` and then run as `./produce.py`
 

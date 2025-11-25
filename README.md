@@ -132,13 +132,13 @@ docker run -d --name kafka-streams-container -p 3000:3000 \
 
 Note that we don't actually use the port for anything at the moment.
 
-You can test by running the `produce.py` program, which generates random
+You can test by running the `produce_json.py` program, which generates random
 messages in a compatible form:
 ```shell
-./produce.py -n 5
+./produce_json.py -n 5
 ```
 
-(try `./produce -h` for help on what it can do.)
+(try `./produce_json -h` for help on what it can do.)
 
 Check the messages are being sent with
 ```shell
