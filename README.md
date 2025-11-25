@@ -3,25 +3,24 @@
 ## What this does
 
 This is an example program written in Java that uses Kafka Streams to filter
-and process JSON messages.
+and process Avro messages.
 
-It reads from `input-topic` and filters message to `output-topic`, on the same Kafka
-service.
+It reads from the topic `logistics_data_gen` and filters message to the topic
+`logistics_data_filtered`, on the same Kafka service.
 
-* It ignores input messages that are not JSON, or are not JSON objects (`{...}`)
-* It ignores input messages where `state` is not set to `Delivered`
-* In the messages it writes to `output-topic`, it writes the following fields:
-  * `name`
-  * `address`
-  * `timestamp`
-  * `tracking_id`, but it uses the name `trackingId`
-* If any of those values are absent in the input message, they will be `null`
-  in the output message.
+* It ignored messages where the `state` is not `Delivered`.
+* It writes messages with values `timeUtc` (instead of `time_utc`),
+  `trackingId` (instead of `tracking_id`), `carrier` and `manifest`.
 
 It is designed to be run in a container - a `Dockerfile` and associated run
 script (`run.sh`) are provided.
 
 The project uses Gradle and Groovy for configuration.
+
+If you're using an Aiven for Apache Kafka serfice, then the Sample data
+generator for "Logistics" will write appropriate messages to the aforesaid
+`logistics_data_gen` topic, so that's a good way of demonstrating that the
+program works.
 
 ## Command line arguments for the Java app
 
@@ -102,6 +101,17 @@ or in the Fish shell
 set -x KAFKA_SERVICE_URI <service uri>
 ```
 
+Do the same the schema registry URL and password (the program
+defaults to the standard schema Karapace username of `avnadmin`, so we don't
+need to specify that).
+```shell
+export SCHEMA_REGISTRY_URL=<schema registry url>
+```
+```shell
+export SCHEMA_REGISTRY_PASSWORD=<schema registry password>
+```
+(the Fish shell equivalents are left as an exercise for Fish shell users:).)
+
 Set an environment variable to the content of each certificate file. You can
 do this by hand, or for convenience there's a shell script:
 ```shell
@@ -124,10 +134,19 @@ docker run -d --name kafka-streams-container -p 3000:3000 \
         -e CA_PEM_CONTENTS=$CA_PEM_CONTENTS \
         -e SERVICE_CERT_CONTENTS=$SERVICE_CERT_CONTENTS \
         -e SERVICE_KEY_CONTENTS=$SERVICE_KEY_CONTENTS \
+        -e SCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL \
+        -e SCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD \
         appimage
 ```
 
 Note that we don't actually use the port for anything at the moment.
+
+The above assumes that the schema registry username will be "avnadmin". If
+that's not correct, add an appropriate `-e` switch - for instance:
+```shell
+        -e SCHEMA_REGISTRY_USERNAME=main \ 
+```
+(obviously replacing `name` with the actual username).
 
 You can test by running the `produce.py` program, which generates random
 messages in a compatible form:
@@ -202,7 +221,23 @@ avn service create $KAFKA_SERVICE_NAME          \
 
 Get the service URI for the new service
 ``` shell
-set -x KAFKA_SERVICE_URI (avn service get $KAFKA_SERVICE_NAME --format '{service_uri}')
+export KAFKA_SERVICE_URI=$(avn service get $KAFKA_SERVICE_NAME --format '{service_uri}')
+```
+
+Get the schema registry (Karapace) URL
+```shell
+export SCHEMA_REGISTRY_URL=$(avn service get $KAFKA_SERVICE_NAME --json | jq -r '.connection_info.schema_registry_uri')
+```
+
+Get the schema registry password
+```shell
+export SCHEMA_REGISTRY_PASSWORD=$(avn service get $KAFKA_SERVICE_NAME --json | jq -r '.users[0].password')
+```
+
+We assume the default username for the schema registry, so don't need to
+look that up, but if you do need it then you can get it with
+```shell
+export SCHEMA_REGISTRY_USERNAME=$(avn service get $KAFKA_SERVICE_NAME --json | jq -r '.users[0].username')
 ```
 
 Wait for it to reach Running state

@@ -6,8 +6,11 @@
  */
 
 plugins {
-    // Apply the application plugin to add support for building a CLI application in Java.
+    // The application plugin aids with building a CLI application in Java.
     id 'application'
+    // This seems to be the standard Avro schema plugin, even though it's
+    // no longer actively maintained
+    id 'com.github.davidmc24.gradle.plugin.avro' version '1.9.1'
 }
 
 repositories {
@@ -19,14 +22,26 @@ repositories {
     }
 }
 
+// We're targeting Java 21 as a "safe" choice
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 dependencies {
-   implementation 'org.apache.kafka:kafka-streams:3.8.0'
+    implementation 'org.apache.kafka:kafka-streams:3.6.0'
+    //implementation 'org.apache.kafka:kafka-streams:3.8.0'
 
-    // Gson for lightweight JSON parsing
-    implementation 'com.google.code.gson:gson:2.10.1'
+    // Confluent Avro Serdes (which is compatible with Karapace)
+    implementation 'io.confluent:kafka-streams-avro-serde:7.6.1'
+    //implementation 'io.confluent:kafka-streams-avro-serde:8.1.0'
 
-   implementation 'org.slf4j:slf4j-api:2.0.13'
-   implementation 'org.slf4j:slf4j-simple:2.0.13'
+    // Avro dependency (for generated classes)
+    implementation 'org.apache.avro:avro:1.11.3'
+
+    implementation 'org.slf4j:slf4j-api:2.0.13'
+    implementation 'org.slf4j:slf4j-simple:2.0.13'
 
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter
@@ -34,12 +49,15 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-// Apply a specific Java toolchain to ease working on different environments.
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+// Indicate where our Avro .avsc file is to be found (the default is "src/main/avro")
+sourceSets {
+    main {
+        resources {
+            srcDirs 'app/src/main/avro'
+        }
     }
 }
+
 
 application {
     // Define the main class for the application.

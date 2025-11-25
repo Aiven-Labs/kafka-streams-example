@@ -1,0 +1,42 @@
+{
+  "namespace": "data.gen.avro",
+  "name": "logistics_delivered",
+  "type": "record",
+  "fields": [
+    {
+      "name": "timeUtc",
+      "type": {
+        "type": "long",
+        "examples": [
+          1747052327
+        ]
+      }
+    },
+    {
+      "name": "trackingId",
+      "type": {
+        "type": "string",
+        "examples": "track-1974256721"
+      }
+    },
+    {
+      "name": "carrier",
+      "type": {
+        "type": "string",
+        "examples": [
+          "AN_POST",
+          "DHL",
+          "USPS",
+          "R_MAIL"
+        ]
+      }
+    },
+    {
+      "name": "manifest",
+      "type": {
+        "type": "array",
+        "items": "string"
+      }
+    }
+  ]
+}

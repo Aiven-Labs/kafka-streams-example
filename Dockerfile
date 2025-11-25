@@ -1,5 +1,4 @@
 # --- First stage: Get our app, work out its dependencies, create a JRE
-#FROM eclipse-temurin:21-jdk-alpine AS builder
 FROM eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
@@ -35,7 +34,6 @@ RUN $JAVA_HOME/bin/jlink \
 # ----------------------------------------------------------------------------
 # --- Second stage: Run the actual image
 # Use the smallest base image possible (alpine)
-##FROM alpine:latest
 FROM debian:bookworm-slim
 
 WORKDIR /app
@@ -66,5 +64,4 @@ COPY run.sh ./
 RUN chmod +x ./run.sh
 
 # Set the custom entrypoint
-##ENTRYPOINT ["./run.sh"]
 CMD [ "./run.sh" ]

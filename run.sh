@@ -6,6 +6,12 @@
 # - CA_PEM_CONTENTS - the contents of the ca.pem file
 # - SERVICE_CERT_CONTENTS - the contents of the service.cert file
 # - SERVICE_KEY_CONTENTS - the contents of the service.key file
+# - SCHEMA_REGISTRY_URL - the URL for the Karapace schema
+# - SCHEMA_REGISTRY_PASSWORD - the password for the schema registry
+#
+# If you give a value for SCHEMA_REGISTRY_USERNAME we'll use it, otherwise
+# we'll use the default value, which is "avnadmin"
+export SCHEMA_REGISTRY_USERNAME=${SCHEMA_REGISTRY_USERNAME:-avnadmin}
 
 echo "SET UP THE certs DIRECTORY"
 # Start with the certificate files
@@ -63,5 +69,8 @@ exec java \
     -DSSL_TRUSTSTORE_LOCATION=$PWD/certs/client.truststore.jks \
     -DSSL_KEYSTORE_LOCATION=$PWD/certs/client.keystore.p12     \
     -DPASSWORD_FOR_STORE=$PASSWORD_FOR_STORE                   \
+    -DSCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL                 \
+    -DSCHEMA_REGISTRY_USERNAME=$SCHEMA_REGISTRY_USERNAME       \
+    -DSCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD       \
     -jar ./FilterApp-uber.jar \
     com.example.FilterApp "$@"
