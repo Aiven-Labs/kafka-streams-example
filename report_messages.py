@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["aiokafka", "avro", "dotenv", "httpx"]
+# dependencies = ["aiokafka", "avro", "dotenv", "httpx", "rich", "textual"]
 # ///
 #
 # As to that `script` block - see
@@ -27,6 +27,8 @@ import ssl
 import struct
 import sys
 
+from collections import deque
+from datetime import datetime
 from pathlib import Path
 
 import aiokafka
@@ -37,14 +39,25 @@ import avro.schema
 import dotenv
 import httpx
 
+from rich.panel import Panel
+from textual.app import App, ComposeResult
+from textual.app import RenderResult
+from textual.containers import Horizontal, Vertical
+from textual.widgets import Static
+from textual.widgets import Footer
+
 DEFAULT_INPUT_TOPIC_NAME = 'logistics_data_gen'
 DEFAULT_OUTPUT_TOPIC_NAME = 'logistics_data_delivered'
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 #logging.basicConfig(
 #    format='%(asctime)s %(levelname)s %(funcName)s: %(message)s',
 #    level=logging.INFO,
 #)
+
+# aiokafka itself likes to provide informative INFO log messages,
+# but I'd rather not have them
+logging.getLogger('aiokafka').setLevel(logging.WARNING)
 
 # Command line default values
 DEFAULT_CERTS_FOLDER = "certs"
@@ -55,6 +68,80 @@ OUTPUT_TOPIC = os.getenv("OUTPUT_TOPIC", "logistics_data_delivered")
 dotenv.load_dotenv()
 
 
+class DemoWidget(Static):
+    """Provide common functionality for our demo widgets
+
+    Subclass, and then make multiple instances of the subclass, which will
+    share the same `lines` dictionary.
+
+    This very simple usage subclasses Static and redraws the entire panel
+    every time we make an alteration.
+
+    Don't forget to re-implement background_task
+    """
+
+    # Maximum number of lines to keep for a widget display
+    MAX_LINES = 40
+
+    DEFAULT_CSS = """
+    DemoWidget {
+        background: #f6fde3;
+        height: 1fr;
+        color: black;
+    }
+
+    .column {
+        width: 1fr;
+    }
+    """
+
+    def __init__(self, name: str) -> None:
+        self.lines = deque(maxlen=self.MAX_LINES)
+        super().__init__(name=name)
+        self.redraw()
+
+    def __str__(self):
+        return self.name
+
+    def redraw(self):
+        self.update(self.make_panel())
+
+    def make_text(self, width, height):
+        # The "magic value" of 2 is the number of characters taken to draw the
+        # border to our Panel.
+        #
+        # We don't want our lines to wrap, so we truncate them, and since
+        # we have left and right borders, that means 2x2
+        lines = [line[:width-4] for line in self.lines]
+        # We only want to display as many lines as we have room for, so
+        # we need to truncate the lines, remembering to allow for the
+        # the bottom panel border
+        return '\n'.join(lines[-(height-2):])
+
+    def make_panel(self) -> RenderResult:
+        text = self.make_text(self.size.width, self.size.height)
+        return Panel(text, title=self.name)
+
+    def add_line(self, text):
+        """Add a line of text to our scrolling display"""
+        self.lines.append(text)
+        self.redraw()
+
+    def change_last_line(self, text):
+        """Change the last line of text to our scrolling display"""
+        self.lines[-1] = text
+        self.redraw()
+
+    async def background_task(self):
+        while True:
+            self.add_line('Implement a real background task')
+            await asyncio.sleep(1)
+
+    async def on_mount(self):
+        asyncio.create_task(self.background_task())
+
+
+
 def get_parsed_avro_schema(schema_as_str: str) -> avro.schema.RecordSchema:
     # Parsing the schema both validates it, and also puts it into a form that
     # can be used when envoding/decoding message data
@@ -63,10 +150,10 @@ def get_parsed_avro_schema(schema_as_str: str) -> avro.schema.RecordSchema:
 
 def lookup_avro_schema(schema_uri: str, schema_id: int) -> avro.schema.RecordSchema:
     """Look up the schema in Karapace"""
-    logging.info(f"Looking up schema {schema_id}")
+    logging.debug(f"Looking up schema {schema_id}")
     r = httpx.get(f"{schema_uri}/schemas/ids/{schema_id}")
     r.raise_for_status()
-    logging.info(f"Response is {r}")
+    logging.debug(f"Response is {r}")
 
     schema_as_str = r.text
 
@@ -113,58 +200,133 @@ async def unpack_avro_payload(
     return message_dict
 
 
-async def report_messages(
-    kafka_uri: str,
-    ssl_context: ssl.SSLContext,
-    schema_registry_url: str,
-    topic_name: str,
-):
+def timestamp_to_string(timestamp: int) -> str:
+    """Return a readable string for a timestamp representing milliseconds since the epoch"""
+    return datetime.fromtimestamp(timestamp / 1000.0).isoformat(sep=' ', timespec='minutes')
+
+
+async def create_consumer(
+        kafka_uri: str,
+        ssl_context: ssl.SSLContext,
+        name: str,
+        topic_name: str,
+) -> aiokafka.AIOKafkaConsumer:
+    """Create a new Consumer, and wait for it to start.
+    """
+    logging.debug(f'Creating consumer {name} for {kafka_uri}')
     try:
         consumer = aiokafka.AIOKafkaConsumer(
             topic_name,
             bootstrap_servers=kafka_uri,
             security_protocol="SSL",
             ssl_context=ssl_context,
-            # Always start from the beginning of the topic - this may not be what
-            # I want in later versions of the program. It needs both `group_id=None`
-            # so we're not in a consumer group sharing offset between consumers
-            # (which would include us and future-us !) plus the actual `auto_offset_reset`
             group_id=None,
-            auto_offset_reset='earliest',
         )
     except Exception as e:
-        logging.error(f'Error creating comsumer: {e.__class__.__name__} {e}')
+        logging.error(f'Error creating consumer {name}: {e.__class__.__name__} {e}')
         return
-    logging.info('Consumer created')
+    logging.debug(f'Consumer {name} created')
 
     try:
         await consumer.start()
     except Exception as e:
-        logging.info(f'Error starting consumer: {e.__class__.__name__} {e}')
+        logging.error(f'Error starting consumer: {e.__class__.__name__} {e}')
         return
-    logging.info('Consumer started')
-
-    cached_schema = {}
-    try:
-        async for message in consumer:
-            value = await unpack_avro_payload(
-                message.value,
-                schema_registry_url,
-                cached_schema,
-            )
-            logging.info(f'DELIVERED timeUtc {value["timeUtc"]} trackingId {value["trackingId"]} via {value["carrier"]}')
-            logging.info(f'    manifest {";".join(value["manifest"])}')
-    finally:
-        await consumer.stop()
+    logging.debug(f'Consumer {name} started')
+    return consumer
 
 
-async def run_tasks(kafka_uri, ssl_context, schema_registry_url, topic_name):
-    """Run the various tasks asynchronously"""
+class MessagePane(DemoWidget):
 
-    async with asyncio.TaskGroup() as tg:
-        task = tg.create_task(
-            report_messages(kafka_uri, ssl_context, schema_registry_url, topic_name)
-        )
+    def __init__(
+            self,
+            name: str,
+            kafka_uri: str,
+            ssl_context: ssl.SSLContext,
+            schema_registry_url: str,
+            topic_name: str,
+            is_input: bool,
+    ) -> None:
+        self.kafka_uri = kafka_uri
+        self.ssl_context = ssl_context
+        self.schema_registry_url = schema_registry_url
+        self.topic_name = topic_name
+        self.is_input = is_input
+        super().__init__(name)
+
+    async def background_task(self):
+        consumer = await create_consumer(self.kafka_uri, self.ssl_context, str(self), self.topic_name)
+
+        # Ignore any older messages - start with the most recent
+        try:
+            await consumer.seek_to_end()
+        except Exception as e:
+            self.add_line(f'Consumer seek-to-end Exception {e.__class__.__name__} {e}')
+            return
+
+        try:
+            cached_schema = {}
+            while True:
+                async for message in consumer:
+                    value = await unpack_avro_payload(message.value, self.schema_registry_url, cached_schema)
+                    logging.debug(f'Topic {self.topic_name} message {value}')
+                    if self.is_input:
+                        self.report_input_message(value)
+                    else:
+                        self.report_output_message(value)
+        except Exception as e:
+            logging.error(f'Exception receiving message {e}')
+            self.add_line(f'Exception receiving message {e}')
+            await consumer.stop()
+        finally:
+            logging.debug(f'Consumer {self} stopping')
+            self.add_line(f'Consumer {self} stopping')
+            await consumer.stop()
+            logging.debug(f'Consumer {self} stopped')
+
+    def report_input_message(self, value: dict):
+        if value["state"] == "Delivered":
+            value["state"] = "DELIVERED"  # to make it stand out more and match the other pane
+        self.add_line(f'{timestamp_to_string(value["time_utc"])} {value["state"]} {value["tracking_id"]} via {value["carrier"]} next hop {value["next_hop_location"]}')
+        if value["message"]:
+            self.add_line(f'    message "{value['message']}"')
+        if value["manifest"] and value["manifest"][0]:
+            self.add_line(f'    manifest {";".join(value["manifest"])}')
+
+    def report_output_message(self, value: dict):
+        self.add_line(f'{timestamp_to_string(value["timeUtc"])} DELIVERED {value["trackingId"]} via {value["carrier"]}')
+        if value["manifest"] and value["manifest"][0]:
+            self.add_line(f'    manifest {";".join(value["manifest"])}')
+
+
+class MyGridApp(App):
+
+    BINDINGS = [
+        ("q", "quit()", "Quit"),
+    ]
+
+    def __init__(
+            self,
+            kafka_uri: str,
+            ssl_context: ssl.SSLContext,
+            schema_registry_url: str,
+            input_topic_name: str,
+            output_topic_name: str,
+    ):
+        self.kafka_uri = kafka_uri
+        self.ssl_context = ssl_context
+        self.schema_registry_url = schema_registry_url
+        self.input_topic_name = input_topic_name
+        self.output_topic_name = output_topic_name
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield MessagePane('Logistics Data (time_utc,state,tracking_id,carrier,next_hop_location,message,manifest)', self.kafka_uri, self.ssl_context, self.schema_registry_url,
+                              self.input_topic_name, True)
+            yield MessagePane('Logistics Data: Delivered (timeUtc,stage,trackingId,carrier,manifest)', self.kafka_uri, self.ssl_context,
+                              self.schema_registry_url, self.output_topic_name, False)
+            yield Footer()
 
 
 def main():
@@ -186,6 +348,10 @@ def main():
              'embedded in it',
     )
     parser.add_argument(
+        '-i', '--input-topic', default=DEFAULT_INPUT_TOPIC_NAME,
+        help=f'the input topic to read messages from, default "{DEFAULT_INPUT_TOPIC_NAME}"',
+    )
+    parser.add_argument(
         '-o', '--output-topic', default=DEFAULT_OUTPUT_TOPIC_NAME,
         help=f'the output topic to read messages from, default "{DEFAULT_OUTPUT_TOPIC_NAME}"',
     )
@@ -193,24 +359,20 @@ def main():
     args = parser.parse_args()
 
     if args.kafka_uri is None:
-        print('The URI for the Kafka service is required')
-        print('Set KAFKA_SERVICE_URI or use the -k switch')
-        logging.erro1Gr('The URI for the Kafka service is required')
+        logging.error('The URI for the Kafka service is required')
         logging.error('Set KAFKA_SERVICE_URI or use the -k switch')
         return -1
 
     if args.schema_registry_url is None:
-        print('The URL for the schema registry service is required')
-        print('Set SCHEMA_REGISTRY_URL or use the -s switch')
         logging.error('The URL for the schema registry service is required')
         logging.error('Set SCHEMA_REGISTRY_URL or use the -s switch')
         return -1
 
-    print('Reading messages')
-    print(f'Kafka service URI {args.kafka_uri}')
-    print(f'Certificates in {args.certs_dir}')
-    print(f'Schema registry URL {args.schema_registry_url}')
-    print(f'Reading from topic {args.output_topic}')
+    logging.debug('Reading messages')
+    logging.debug(f'Kafka service URI {args.kafka_uri}')
+    logging.debug(f'Certificates in {args.certs_dir}')
+    logging.debug(f'Schema registry URL {args.schema_registry_url}')
+    logging.debug(f'Reading from topics {args.input_topic} and {args.output_topic}')
 
     try:
         ssl_context = aiokafka.helpers.create_ssl_context(
@@ -236,14 +398,11 @@ def main():
         logging.error(f'{e.__class__.__name__} {e}')
         return -1
 
-    asyncio.run(
-        run_tasks(
-            args.kafka_uri,
-            ssl_context,
-            args.schema_registry_url,
-            args.output_topic,
-        )
+    app = MyGridApp(
+        args.kafka_uri, ssl_context, args.schema_registry_url,
+        args.input_topic, args.output_topic,
     )
+    app.run()
 
 
 if __name__ == '__main__':
