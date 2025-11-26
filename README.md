@@ -40,10 +40,10 @@ The Java app takes the following arguments:
   Karapace.
 * `-DSCHEMA_REGISTRY_PASSWORD` - the password for accessing the schema registry
 * `-DINPUT_TOPIC` - the input topic name. This defaults to
-  `logicstics_data_gen`, which is the name of the topic written to by the
+  `logistics_data_gen`, which is the name of the topic written to by the
    Logistics data stream creator.
 * `-DOUTPUT_TOPIC` - the output topic name. This defaults to
-  `logicstics_data_delivered`.
+  `logistics_data_delivered`.
 
 ## The container file and how it works
 
@@ -159,18 +159,19 @@ docker run -d --name kafka-streams-container -p 3000:3000 \
         -e SERVICE_CERT_CONTENTS=$SERVICE_CERT_CONTENTS \
         -e SERVICE_KEY_CONTENTS=$SERVICE_KEY_CONTENTS \
         -e SCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL \
+        -e SCHEMA_REGISTRY_USERNAME=$SCHEMA_REGISTRY_USERNAME \ 
         -e SCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD \
+        -e INPUT_TOPIC=$INPUT_TOPIC \
+        -e OUTPUT_TOPIC=$OUTPUT_TOPIC \
         appimage
 ```
 
 Note that we don't actually use the port for anything at the moment.
 
-The above assumes that the schema registry username will be "avnadmin". If
-that's not correct, add an appropriate `-e` switch - for instance:
-```shell
-        -e SCHEMA_REGISTRY_USERNAME=main \ 
-```
-(obviously replacing `name` with the actual username).
+Three of those environment variable arguments may be omitted and have defaults:
+* `SCHEMA_REGISTRY_USERNAME` - default `avnadmin`
+* `INPUT_TOPIC` - default `logistics_data_gen`
+* `OUTPUT_TOPIC` - default `logistics_data_delivered`
 
 ## Running `run.sh` locally
 
