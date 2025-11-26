@@ -43,7 +43,7 @@ from rich.panel import Panel
 from textual.app import App, ComposeResult
 from textual.app import RenderResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Static
+from textual.widgets import RichLog
 from textual.widgets import Footer
 
 DEFAULT_INPUT_TOPIC_NAME = 'logistics_data_gen'
@@ -59,6 +59,9 @@ logging.basicConfig(level=logging.WARNING)
 # but I'd rather not have them
 logging.getLogger('aiokafka').setLevel(logging.WARNING)
 
+# Try to stop log messages showing up in the panes
+logging.propagate = False
+
 # Command line default values
 DEFAULT_CERTS_FOLDER = "certs"
 KAFKA_SERVICE_URI = os.getenv("KAFKA_SERVICE_URI")
@@ -68,14 +71,10 @@ OUTPUT_TOPIC = os.getenv("OUTPUT_TOPIC", "logistics_data_delivered")
 dotenv.load_dotenv()
 
 
-class DemoWidget(Static):
-    """Provide common functionality for our demo widgets
+class RichLogWidget(RichLog):
+    """Provide the base functionality for our pane widget
 
-    Subclass, and then make multiple instances of the subclass, which will
-    share the same `lines` dictionary.
-
-    This very simple usage subclasses Static and redraws the entire panel
-    every time we make an alteration.
+    It's separated out so the subclass is easier to read
 
     Don't forget to re-implement background_task
     """
@@ -84,53 +83,31 @@ class DemoWidget(Static):
     MAX_LINES = 40
 
     DEFAULT_CSS = """
-    DemoWidget {
+    RichLogWidget {
         background: #f6fde3;
         height: 1fr;
         color: black;
+        border: black;
     }
-
+ 
     .column {
         width: 1fr;
     }
     """
 
     def __init__(self, name: str) -> None:
-        self.lines = deque(maxlen=self.MAX_LINES)
-        super().__init__(name=name)
-        self.redraw()
+        super().__init__(
+            name=name,
+            max_lines=self.MAX_LINES,
+            markup=True,
+        )
 
     def __str__(self):
         return self.name
 
-    def redraw(self):
-        self.update(self.make_panel())
-
-    def make_text(self, width, height):
-        # The "magic value" of 2 is the number of characters taken to draw the
-        # border to our Panel.
-        #
-        # We don't want our lines to wrap, so we truncate them, and since
-        # we have left and right borders, that means 2x2
-        lines = [line[:width-4] for line in self.lines]
-        # We only want to display as many lines as we have room for, so
-        # we need to truncate the lines, remembering to allow for the
-        # the bottom panel border
-        return '\n'.join(lines[-(height-2):])
-
-    def make_panel(self) -> RenderResult:
-        text = self.make_text(self.size.width, self.size.height)
-        return Panel(text, title=self.name)
-
     def add_line(self, text):
         """Add a line of text to our scrolling display"""
-        self.lines.append(text)
-        self.redraw()
-
-    def change_last_line(self, text):
-        """Change the last line of text to our scrolling display"""
-        self.lines[-1] = text
-        self.redraw()
+        self.write(text)
 
     async def background_task(self):
         while True:
@@ -138,8 +115,8 @@ class DemoWidget(Static):
             await asyncio.sleep(1)
 
     async def on_mount(self):
+        self.border_title = self.name
         asyncio.create_task(self.background_task())
-
 
 
 def get_parsed_avro_schema(schema_as_str: str) -> avro.schema.RecordSchema:
@@ -236,7 +213,7 @@ async def create_consumer(
     return consumer
 
 
-class MessagePane(DemoWidget):
+class MessagePane(RichLogWidget):
 
     def __init__(
             self,
@@ -287,7 +264,7 @@ class MessagePane(DemoWidget):
     def report_input_message(self, value: dict):
         if value["state"] == "Delivered":
             value["state"] = "DELIVERED"  # to make it stand out more and match the other pane
-        self.add_line(f'{timestamp_to_string(value["time_utc"])} {value["state"]} {value["tracking_id"]} via {value["carrier"]} next hop {value["next_hop_location"]}')
+        self.add_line(f'[chartreuse]{timestamp_to_string(value["time_utc"])} {value["state"]}[/] {value["tracking_id"]} via {value["carrier"]} next hop {value["next_hop_location"]}')
         if value["message"]:
             self.add_line(f'    message "{value['message']}"')
         if value["manifest"] and value["manifest"][0]:
