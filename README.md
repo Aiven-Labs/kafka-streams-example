@@ -5,8 +5,8 @@
 This is an example program written in Java that uses Kafka Streams to filter
 and process Avro messages.
 
-It reads from the topic `logistics_data_gen` and filters message to the topic
-`logistics_data_filtered`, on the same Kafka service.
+By default it reads from the topic `logistics_data_gen` and filters message to the topic
+`logistics_data_delivered`. Both topics must be on the same Kafka service.
 
 * It ignored messages where the `state` is not `Delivered`.
 * It writes messages with values `timeUtc` (instead of `time_utc`),
@@ -19,8 +19,8 @@ The project uses Gradle and Groovy for configuration.
 
 If you're using an Aiven for Apache Kafka service, then the Sample data
 generator for "Logistics" will write appropriate messages to the aforesaid
-`logistics_data_filtered` topic, so that's a good way of demonstrating that the
-program works.
+`logistics_data_gen` topic, which this program will then filter, so that's a
+good way of demonstrating that the program works.
 
 > **Note** There is an older version of this code for handling JSON messages
 > on the `json` branch.
@@ -29,15 +29,21 @@ program works.
 
 The Java app takes the following arguments:
 
-* `-DKAFKA_SERVICE_URI` - the URI for the Kafka service
-* `-DSSL_TRUSTSTORE_LOCATION` - the directory containing the `client.truststore.jks` file
+* `-DKAFKA_SERVICE_URI` - the URI for the Kafka service.
+* `-DSSL_TRUSTSTORE_LOCATION` - the directory containing the `client.truststore.jks` file.
 * `-DSSL_KEYSTORE_LOCATION` - the directory containing the `client.keystore.p12` file
 * `-DPASSWORD_FOR_STORE` - the password used for those stores (this assumes
-  the same password is used for both)
-* `-DSCHEMA_REGISTRY_URL` - the URL for the schema registry
+  the same password is used for both).
+* `-DSCHEMA_REGISTRY_URL` - the URL for the schema registry.
 * `-DSCHEMA_REGISTRY_USERNAME` - the user name for accessing the schema
-  registry, typically `avnadmin` for Karapace
+  registry. This defaults to `avnadmin`, which is the default user name for
+  Karapace.
 * `-DSCHEMA_REGISTRY_PASSWORD` - the password for accessing the schema registry
+* `-DINPUT_TOPIC` - the input topic name. This defaults to
+  `logicstics_data_gen`, which is the name of the topic written to by the
+   Logistics data stream creator.
+* `-DOUTPUT_TOPIC` - the output topic name. This defaults to
+  `logicstics_data_delivered`.
 
 ## The container file and how it works
 
@@ -70,6 +76,10 @@ The `run.sh` file assumes it has the following environment variables as input:
   registry. **This is optional** and if it is not given, a value of `avnadmin`
   will be assumed
 - `SCHEMA_REGISTRY_PASSWORD` - the password for accessing the schema registry
+- `INPUT_TOPIC` - the input topic name. **This is optional** and defaults to
+  `logistics_data_gen`.
+- `OUTPUT_TOPIC` - the output topic name. **This is optional** and defaults to
+  `logistics_data_delivered`.
 
 It puts the contents of the `CA_PEM_CONTENTS`, `SERVICE_CERT_CONTENTS` and
 `SERVICE_KEY_CONTENTS` environemnt variables into files of the
@@ -246,7 +256,12 @@ Wait for it to reach Running state
 avn service wait $KAFKA_SERVICE_NAME
 ```
 
-Once the Kafka service is running, create the two topics
+Once the Kafka service is running, you can create the two topics if you're not using the standard names, but
+1. The Logistics sample data stream generator will create `logistics_data_gen`
+   topic for you.
+2. The `-c kafka.auto_create_topics_enable=true` specified when creating the
+   service means the `logistics_data_delivered` topic will get created when the
+   program tries to writ to it.
 ```shell
 avn service topic-create    \
     --partitions 1          \
@@ -257,7 +272,7 @@ avn service topic-create    \
 avn service topic-create    \
     --partitions 1          \
     --replication 2         \
-    $KAFKA_SERVICE_NAME logistics_data_filtered
+    $KAFKA_SERVICE_NAME logistics_data_delivered
 ```
 
 Download the certification files (it will create the directory if necessary)

@@ -12,6 +12,11 @@
 # If you give a value for SCHEMA_REGISTRY_USERNAME we'll use it, otherwise
 # we'll use the default value, which is "avnadmin"
 export SCHEMA_REGISTRY_USERNAME=${SCHEMA_REGISTRY_USERNAME:-avnadmin}
+#
+# If you give values for INPUT_TOPIC and OUTPUT_TOPIC we'll use them,
+# otherwise we've got defaults
+export INPUT_TOPIC=${INPUT_TOPIC:-logistics_data_gen}
+export OUTPUT_TOPIC=${OUTPUT_TOPIC:-logistics_data_delivered}
 
 echo "SET UP THE certs DIRECTORY"
 # Start with the certificate files
@@ -72,5 +77,7 @@ exec java \
     -DSCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL                 \
     -DSCHEMA_REGISTRY_USERNAME=$SCHEMA_REGISTRY_USERNAME       \
     -DSCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD       \
+    -DINPUT_TOPIC=$INPUT_TOPIC                                 \
+    -DOUTPUT_TOPIC=$OUTPUT_TOPIC                               \
     -jar ./FilterApp-uber.jar \
     com.example.FilterApp "$@"
