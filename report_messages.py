@@ -40,9 +40,11 @@ import dotenv
 import httpx
 
 from rich.panel import Panel
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.app import RenderResult
 from textual.containers import Horizontal, Vertical
+from textual.content import Content
 from textual.widgets import RichLog
 from textual.widgets import Footer
 
@@ -99,6 +101,7 @@ class RichLogWidget(RichLog):
         super().__init__(
             name=name,
             max_lines=self.MAX_LINES,
+            highlight=True,
             markup=True,
         )
 
@@ -106,7 +109,7 @@ class RichLogWidget(RichLog):
         return self.name
 
     def add_line(self, text):
-        """Add a line of text to our scrolling display"""
+        """Add a line of text or Content or something to our scrolling display"""
         self.write(text)
 
     async def background_task(self):
@@ -264,7 +267,13 @@ class MessagePane(RichLogWidget):
     def report_input_message(self, value: dict):
         if value["state"] == "Delivered":
             value["state"] = "DELIVERED"  # to make it stand out more and match the other pane
-        self.add_line(f'[chartreuse]{timestamp_to_string(value["time_utc"])} {value["state"]}[/] {value["tracking_id"]} via {value["carrier"]} next hop {value["next_hop_location"]}')
+        ##self.add_line(f'[chartreuse]{timestamp_to_string(value["time_utc"])} {value["state"]}[/] {value["tracking_id"]} via {value["carrier"]} next hop {value["next_hop_location"]}')
+        self.add_line(
+            Content.from_markup('[chartreuse]$time_utc $state[/] $tracking_id via $carrier next hop $next_hop_location',
+                                time_utc=value["time_utc"], state=value["state"], tracking_id=value["tracking_id"],
+                                carrier=value["carrier"], next_hop_location=value["next_hop_location"])
+        )
+
         if value["message"]:
             self.add_line(f'    message "{value['message']}"')
         if value["manifest"] and value["manifest"][0]:
