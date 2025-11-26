@@ -8,7 +8,7 @@ and process Avro messages.
 By default it reads from the topic `logistics_data_gen` and filters message to the topic
 `logistics_data_delivered`. Both topics must be on the same Kafka service.
 
-* It ignored messages where the `state` is not `Delivered`.
+* It ignores messages where the `state` is not `Delivered`.
 * It writes messages with values `timeUtc` (instead of `time_utc`),
   `trackingId` (instead of `tracking_id`), `carrier` and `manifest`.
 
