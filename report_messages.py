@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["avro", "dotenv", "httpx", "kafka-python"]
+# dependencies = ["aiokafka", "avro", "dotenv", "httpx"]
 # ///
 #
 # As to that `script` block - see
@@ -17,31 +17,34 @@ Use `./report_messages.py -h` for help on how it is used.
 """
 
 import argparse
+import asyncio
 import io
 import json
 import logging
 import os
 import pathlib
+import ssl
 import struct
 import sys
 
+from pathlib import Path
+
+import aiokafka
+import aiokafka.helpers
 import avro
 import avro.io
 import avro.schema
 import dotenv
 import httpx
 
-from pathlib import Path
-
-from kafka import KafkaConsumer
-
 DEFAULT_INPUT_TOPIC_NAME = 'logistics_data_gen'
 DEFAULT_OUTPUT_TOPIC_NAME = 'logistics_data_delivered'
 
 logging.basicConfig(level=logging.INFO)
-# kafka-python itself likes to provide informative INFO log messages,
-# but I'd rather not have them
-logging.getLogger('kafka').setLevel(logging.WARNING)
+#logging.basicConfig(
+#    format='%(asctime)s %(levelname)s %(funcName)s: %(message)s',
+#    level=logging.INFO,
+#)
 
 # Command line default values
 DEFAULT_CERTS_FOLDER = "certs"
@@ -71,7 +74,7 @@ def lookup_avro_schema(schema_uri: str, schema_id: int) -> avro.schema.RecordSch
     return get_parsed_avro_schema(avro_schema["schema"])
 
 
-def unpack_avro_payload(
+async def unpack_avro_payload(
     message: bytes,
     schema_uri: str,
     cached_schema: dict[int : avro.schema.RecordSchema],
@@ -110,36 +113,58 @@ def unpack_avro_payload(
     return message_dict
 
 
-def report_messages(
+async def report_messages(
     kafka_uri: str,
-    certs_dir: pathlib.Path,
+    ssl_context: ssl.SSLContext,
     schema_registry_url: str,
     topic_name: str,
 ):
-    consumer = KafkaConsumer(
-        bootstrap_servers=kafka_uri,
-        security_protocol="SSL",
-        ssl_cafile=certs_dir / "ca.pem",
-        ssl_certfile=certs_dir / "service.cert",
-        ssl_keyfile=certs_dir / "service.key",
-        group_id='logistics_data',
-        auto_offset_reset='earliest',
-    )
-    print(f'Subscribing to topic {topic_name}')
-    consumer.subscribe([topic_name])
+    try:
+        consumer = aiokafka.AIOKafkaConsumer(
+            topic_name,
+            bootstrap_servers=kafka_uri,
+            security_protocol="SSL",
+            ssl_context=ssl_context,
+            # Always start from the beginning of the topic - this may not be what
+            # I want in later versions of the program. It needs both `group_id=None`
+            # so we're not in a consumer group sharing offset between consumers
+            # (which would include us and future-us !) plus the actual `auto_offset_reset`
+            group_id=None,
+            auto_offset_reset='earliest',
+        )
+    except Exception as e:
+        logging.error(f'Error creating comsumer: {e.__class__.__name__} {e}')
+        return
+    logging.info('Consumer created')
 
-    print('About to read messages')
+    try:
+        await consumer.start()
+    except Exception as e:
+        logging.info(f'Error starting consumer: {e.__class__.__name__} {e}')
+        return
+    logging.info('Consumer started')
+
     cached_schema = {}
     try:
-        for message in consumer:
-            value = unpack_avro_payload(
-                        message.value,
-                        schema_registry_url,
-                        cached_schema,
-                    )
-            print(f'Value {value}')
+        async for message in consumer:
+            value = await unpack_avro_payload(
+                message.value,
+                schema_registry_url,
+                cached_schema,
+            )
+            logging.info(f'DELIVERED timeUtc {value["timeUtc"]} trackingId {value["trackingId"]} via {value["carrier"]}')
+            logging.info(f'    manifest {";".join(value["manifest"])}')
     finally:
-        consumer.close()
+        await consumer.stop()
+
+
+async def run_tasks(kafka_uri, ssl_context, schema_registry_url, topic_name):
+    """Run the various tasks asynchronously"""
+
+    async with asyncio.TaskGroup() as tg:
+        task = tg.create_task(
+            report_messages(kafka_uri, ssl_context, schema_registry_url, topic_name)
+        )
 
 
 def main():
@@ -187,9 +212,38 @@ def main():
     print(f'Schema registry URL {args.schema_registry_url}')
     print(f'Reading from topic {args.output_topic}')
 
-    report_messages(
-        args.kafka_uri, args.certs_dir, args.schema_registry_url, args.output_topic,
-    ),
+    try:
+        ssl_context = aiokafka.helpers.create_ssl_context(
+            cafile=args.certs_dir / "ca.pem",
+            certfile=args.certs_dir / "service.cert",
+            keyfile=args.certs_dir / "service.key",
+        )
+        # The helper function above calls ssl.create_default_context for us.
+        # Python 3.13 made ssl.create_default_context apply stricter standards,
+        # in particular VERIFY_X509_STRICT. This requires the Basic Constraints
+        # of the CA cert to be marked critical. At the moment, the ca.pem
+        # returned for an Aiven for Apache Kafka service does not do so.
+        #
+        # See https://discuss.python.org/t/ssl-changing-the-default-sslcontext-verify-flags/30230/12
+        # for the historical context
+        #
+        # The workaround documented (but not recommended) at
+        # https://docs.python.org/3/library/ssl.html#context-creation is
+        ssl_context.verify_flags &= ~ssl.VERIFY_X509_STRICT
+
+    except Exception as e:
+        logging.error(f'Error loading SSL certificates from {args.certs_dir}')
+        logging.error(f'{e.__class__.__name__} {e}')
+        return -1
+
+    asyncio.run(
+        run_tasks(
+            args.kafka_uri,
+            ssl_context,
+            args.schema_registry_url,
+            args.output_topic,
+        )
+    )
 
 
 if __name__ == '__main__':
