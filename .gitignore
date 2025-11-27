@@ -4,8 +4,16 @@
 # Ignore Gradle build output directory
 build
 
+# Other built stuff
+app/libs/
+
 # Any certificates directory from testing
 certs/
 
 # Python virtual environment
 venv/
+
+# Temporary files :)
+temp*
+temp/
+test.*
