@@ -185,6 +185,16 @@ So
 rm -rf certs && ./run.sh
 ```
 
+## Visualising the messages
+
+The command line program `report_messages.py` reads messages from both the
+input and output topics and shows them using a text UI.
+
+Get help on what it does with
+```shell
+./report_messages.py -h
+```
+
 ## End to end example using Aiven for Kafka
 
 It's possible to do everything in this section using using the Aiven [web
