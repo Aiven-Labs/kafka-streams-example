@@ -81,12 +81,10 @@ class RichLogWidget(RichLog):
     Don't forget to re-implement background_task
     """
 
-    # Maximum number of lines to keep for a widget display
-    MAX_LINES = 40
-
     DEFAULT_CSS = """
     RichLogWidget {
-        background: #f6fde3;
+        # background: #f6fde3;
+        background: white;
         height: 1fr;
         color: black;
         border: black;
@@ -100,7 +98,6 @@ class RichLogWidget(RichLog):
     def __init__(self, name: str) -> None:
         super().__init__(
             name=name,
-            max_lines=self.MAX_LINES,
             highlight=True,
             markup=True,
         )
@@ -255,8 +252,8 @@ class MessagePane(RichLogWidget):
                     else:
                         self.report_output_message(value)
         except Exception as e:
-            logging.error(f'Exception receiving message {e}')
-            self.add_line(f'Exception receiving message {e}')
+            logging.error(f'Exception receiving/showing message: {e}')
+            self.add_line(f'Exception receiving/showing message: {e}')
             await consumer.stop()
         finally:
             logging.debug(f'Consumer {self} stopping')
@@ -264,25 +261,55 @@ class MessagePane(RichLogWidget):
             await consumer.stop()
             logging.debug(f'Consumer {self} stopped')
 
+    # Heed the warning at https://textual.textualize.io/guide/content/#markup-variables
+    # I initially tried using `f` strings in the following, but it did indeed
+    # lead to weird interactions with the markup in `[...]`, so I'm now using
+    # Content.from_markup as suggested
+
     def report_input_message(self, value: dict):
         if value["state"] == "Delivered":
-            value["state"] = "DELIVERED"  # to make it stand out more and match the other pane
-        ##self.add_line(f'[chartreuse]{timestamp_to_string(value["time_utc"])} {value["state"]}[/] {value["tracking_id"]} via {value["carrier"]} next hop {value["next_hop_location"]}')
-        self.add_line(
-            Content.from_markup('[chartreuse]$time_utc $state[/] $tracking_id via $carrier next hop $next_hop_location',
-                                time_utc=value["time_utc"], state=value["state"], tracking_id=value["tracking_id"],
-                                carrier=value["carrier"], next_hop_location=value["next_hop_location"])
-        )
-
+            self.add_line(
+                Content.from_markup(
+                    '[on #f6fde3][bold]$timestamp $state[/bold] $tracking_id via $carrier[/on] next hop $next_hop_location',
+                    timestamp=timestamp_to_string(value["time_utc"]),
+                    state=value["state"], tracking_id=value["tracking_id"],
+                    carrier=value["carrier"], next_hop_location=value["next_hop_location"]
+                )
+            )
+            if value["manifest"] and value["manifest"][0]:
+                self.add_line(
+                    Content.from_markup('[on #f6fde3]    manifest $manifest[/on', manifest=";".join(value["manifest"]))
+                )
+        else:
+            self.add_line(
+                Content.from_markup(
+                    '$timestamp $state $tracking_id via $carrier next hop $next_hop_location',
+                    timestamp=timestamp_to_string(value["time_utc"]),
+                    state=value["state"], tracking_id=value["tracking_id"],
+                    carrier=value["carrier"], next_hop_location=value["next_hop_location"]
+                )
+            )
+            if value["manifest"] and value["manifest"][0]:
+                self.add_line(
+                    Content.from_markup('    manifest $manifest', manifest=";".join(value["manifest"]))
+                )
         if value["message"]:
-            self.add_line(f'    message "{value['message']}"')
-        if value["manifest"] and value["manifest"][0]:
-            self.add_line(f'    manifest {";".join(value["manifest"])}')
+            self.add_line(
+                Content.from_markup('    message "$message"', message=value['message'])
+            )
 
     def report_output_message(self, value: dict):
-        self.add_line(f'{timestamp_to_string(value["timeUtc"])} DELIVERED {value["trackingId"]} via {value["carrier"]}')
+        self.add_line(
+            Content.from_markup(
+                '[on #f6fde3][bold]$timestamp[/] $trackingId via $carrier[/on]',
+                timestamp=timestamp_to_string(value["timeUtc"]),
+                trackingId=value["trackingId"], carrier=value["carrier"],
+            )
+        )
         if value["manifest"] and value["manifest"][0]:
-            self.add_line(f'    manifest {";".join(value["manifest"])}')
+            self.add_line(
+                Content.from_markup('    manifest $manifest', manifest=";".join(value["manifest"]))
+            )
 
 
 class MyGridApp(App):
@@ -298,21 +325,37 @@ class MyGridApp(App):
             schema_registry_url: str,
             input_topic_name: str,
             output_topic_name: str,
+            flip: bool,
     ):
         self.kafka_uri = kafka_uri
         self.ssl_context = ssl_context
         self.schema_registry_url = schema_registry_url
         self.input_topic_name = input_topic_name
         self.output_topic_name = output_topic_name
+        self.flip = flip
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield MessagePane('Logistics Data (time_utc,state,tracking_id,carrier,next_hop_location,message,manifest)', self.kafka_uri, self.ssl_context, self.schema_registry_url,
-                              self.input_topic_name, True)
-            yield MessagePane('Logistics Data: Delivered (timeUtc,stage,trackingId,carrier,manifest)', self.kafka_uri, self.ssl_context,
-                              self.schema_registry_url, self.output_topic_name, False)
-            yield Footer()
+        input_pane = MessagePane('Logistics Data (time_utc,state,tracking_id,carrier,next_hop_location,message,manifest)',
+                                 self.kafka_uri, self.ssl_context, self.schema_registry_url,
+                                 self.input_topic_name, True)
+        output_pane = MessagePane('Logistics Data: [bold]Delivered[/] (timeUtc,stage,trackingId,carrier,manifest)', self.kafka_uri,
+                                  self.ssl_context,
+                                  self.schema_registry_url, self.output_topic_name, False)
+
+        if self.flip:
+            # One pane above another
+            with Vertical():
+                yield input_pane
+                yield output_pane
+                yield Footer()
+        else:
+            # Two panes next to each other
+            with Vertical():
+                with Horizontal():
+                    yield input_pane
+                    yield output_pane
+                yield Footer()
 
 
 def main():
@@ -340,6 +383,11 @@ def main():
     parser.add_argument(
         '-o', '--output-topic', default=DEFAULT_OUTPUT_TOPIC_NAME,
         help=f'the output topic to read messages from, default "{DEFAULT_OUTPUT_TOPIC_NAME}"',
+    )
+    parser.add_argument(
+        '--flip', action='store_true',
+        help='show the input above the output. The default is to'
+             'show the input on the left, the output on the right.',
     )
 
     args = parser.parse_args()
@@ -386,7 +434,7 @@ def main():
 
     app = MyGridApp(
         args.kafka_uri, ssl_context, args.schema_registry_url,
-        args.input_topic, args.output_topic,
+        args.input_topic, args.output_topic, args.flip,
     )
     app.run()
 
