@@ -226,6 +226,9 @@ docker run -d --name report-messages-container -p 3000:3000 \
 It deliberately uses the same environment variables as are needed to run the 
 actual application.
 
+> **Note** It assumes that the `$SCHEMA_REGISTRY_URL` includes the username
+> and password in the URL.
+
 ## End to end example using Aiven for Kafka
 
 It's possible to do everything in this section using using the Aiven [web

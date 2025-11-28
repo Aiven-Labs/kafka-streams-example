@@ -7,11 +7,6 @@
 # - SERVICE_CERT_CONTENTS - the contents of the service.cert file
 # - SERVICE_KEY_CONTENTS - the contents of the service.key file
 # - SCHEMA_REGISTRY_URL - the URL for the Karapace schema
-# - SCHEMA_REGISTRY_PASSWORD - the password for the schema registry
-#
-# If you give a value for SCHEMA_REGISTRY_USERNAME we'll use it, otherwise
-# we'll use the default value, which is "avnadmin"
-export SCHEMA_REGISTRY_USERNAME=${SCHEMA_REGISTRY_USERNAME:-avnadmin}
 #
 # If you give values for INPUT_TOPIC and OUTPUT_TOPIC we'll use them,
 # otherwise we've got defaults
