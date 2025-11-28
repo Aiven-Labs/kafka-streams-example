@@ -68,7 +68,8 @@ logging.propagate = False
 DEFAULT_CERTS_FOLDER = "certs"
 KAFKA_SERVICE_URI = os.getenv("KAFKA_SERVICE_URI")
 SCHEMA_REGISTRY_URL = os.getenv("SCHEMA_REGISTRY_URL")
-OUTPUT_TOPIC = os.getenv("OUTPUT_TOPIC", "logistics_data_delivered")
+INPUT_TOPIC = os.getenv("INPUT_TOPIC", DEFAULT_INPUT_TOPIC_NAME)
+OUTPUT_TOPIC = os.getenv("OUTPUT_TOPIC", DEFAULT_OUTPUT_TOPIC_NAME)
 # Allow setting these defaults via a `.env` file as well
 dotenv.load_dotenv()
 
