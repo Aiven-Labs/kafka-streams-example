@@ -375,15 +375,15 @@ def main():
         '-s', '--schema-registry-url', default=SCHEMA_REGISTRY_URL,
         help='the URL for the schema registry service, defaulting to $SCHEMA_REGISTRY_URL'
              ' if that is set. It is assumed to have the username and password'
-             'embedded in it',
+             ' embedded in it',
     )
     parser.add_argument(
-        '-i', '--input-topic', default=DEFAULT_INPUT_TOPIC_NAME,
-        help=f'the input topic to read messages from, default "{DEFAULT_INPUT_TOPIC_NAME}"',
+        '-i', '--input-topic', default=INPUT_TOPIC,
+        help=f'the input topic to read messages from, default "{INPUT_TOPIC}"',
     )
     parser.add_argument(
-        '-o', '--output-topic', default=DEFAULT_OUTPUT_TOPIC_NAME,
-        help=f'the output topic to read messages from, default "{DEFAULT_OUTPUT_TOPIC_NAME}"',
+        '-o', '--output-topic', default=OUTPUT_TOPIC,
+        help=f'the output topic to read messages from, default "{OUTPUT_TOPIC}"',
     )
     parser.add_argument(
         '--flip', action='store_true',
