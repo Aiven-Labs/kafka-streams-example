@@ -17,3 +17,6 @@ venv/
 temp*
 temp/
 test.*
+
+# Other Python stuff
+__pycache__/
