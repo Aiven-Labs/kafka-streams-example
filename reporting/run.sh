@@ -13,6 +13,9 @@
 export INPUT_TOPIC=${INPUT_TOPIC:-logistics_data_gen}
 export OUTPUT_TOPIC=${OUTPUT_TOPIC:-logistics_data_delivered}
 
+# We are (presumably) running as a containerised application
+export RUNNING_AS_APP=True
+
 echo "SET UP THE certs DIRECTORY"
 # Start with the certificate files
 mkdir -p certs

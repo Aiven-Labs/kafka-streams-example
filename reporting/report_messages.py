@@ -51,15 +51,25 @@ from textual.widgets import Footer
 DEFAULT_INPUT_TOPIC_NAME = 'logistics_data_gen'
 DEFAULT_OUTPUT_TOPIC_NAME = 'logistics_data_delivered'
 
-logging.basicConfig(level=logging.WARNING)
+# Are we running in a container context?
+RUNNING_AS_APP = os.getenv("RUNNING_AS_APP")
+RUNNING_AS_APP = RUNNING_AS_APP in ['True', 'TRUE', 'true', 'yes']:
+
+if RUNNING_AS_APP:
+    logging.basicConfig(level=logging.DEBUG)
+    logging.info("Running as an application")
+else:
+    logging.basicConfig(level=logging.WARNING)
+
 #logging.basicConfig(
 #    format='%(asctime)s %(levelname)s %(funcName)s: %(message)s',
 #    level=logging.INFO,
 #)
 
 # aiokafka itself likes to provide informative INFO log messages,
-# but I'd rather not have them
-logging.getLogger('aiokafka').setLevel(logging.WARNING)
+# but I'd rather not have them when this is a terminal program
+if not RUNNING_AS_APP:
+    logging.getLogger('aiokafka').setLevel(logging.WARNING)
 
 # Try to stop log messages showing up in the panes
 logging.propagate = False
@@ -315,9 +325,11 @@ class MessagePane(RichLogWidget):
 
 class MyGridApp(App):
 
-    BINDINGS = [
-        ("q", "quit()", "Quit"),
-    ]
+    # When we're running as an app, "quit" makes no sense
+    if not RUNNING_AS_APP:
+        BINDINGS = [
+            ("q", "quit()", "Quit"),
+        ]
 
     def __init__(
             self,

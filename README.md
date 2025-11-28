@@ -193,7 +193,7 @@ and shows them using a text UI.
 
 If all the environment variables discussed before are set up, then you can 
 run it with
-```json
+```shell
 reporting/report_messages.py
 ```
 
