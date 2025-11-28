@@ -187,13 +187,44 @@ rm -rf certs && ./run.sh
 
 ## Visualising the messages
 
-The command line program `report_messages.py` reads messages from both the
-input and output topics and shows them using a text UI.
+In the `reporting` directory there is a command line program
+`report_messages.py` which reads messages from both the input and output topics
+and shows them using a text UI.
+
+If all the environment variables discussed before are set up, then you can 
+run it with
+```json
+reporting/report_messages.py
+```
 
 Get help on what it does with
 ```shell
-./report_messages.py -h
+reporting/report_messages.py -h
 ```
+
+In that same directory there is a wrapper (`serve.py`) which allows it to be 
+run as a web app in a Docker container.
+
+For instance:
+```shell
+cd reporting
+```
+```shell
+docker build -t report_image .
+```
+
+```shell
+docker run -d --name report-messages-container -p 3000:3000 \
+        -e KAFKA_SERVICE_URI=$KAFKA_SERVICE_URI \
+        -e CA_PEM_CONTENTS=$CA_PEM_CONTENTS \
+        -e SERVICE_CERT_CONTENTS=$SERVICE_CERT_CONTENTS \
+        -e SERVICE_KEY_CONTENTS=$SERVICE_KEY_CONTENTS \
+        -e SCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL \
+        report_image
+```
+
+It deliberately uses the same environment variables as are needed to run the 
+actual application.
 
 ## End to end example using Aiven for Kafka
 
