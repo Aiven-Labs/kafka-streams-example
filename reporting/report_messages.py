@@ -53,7 +53,7 @@ DEFAULT_OUTPUT_TOPIC_NAME = 'logistics_data_delivered'
 
 # Are we running in a container context?
 RUNNING_AS_APP = os.getenv("RUNNING_AS_APP")
-RUNNING_AS_APP = RUNNING_AS_APP in ['True', 'TRUE', 'true', 'yes']:
+RUNNING_AS_APP = RUNNING_AS_APP in ['True', 'TRUE', 'true', 'yes']
 
 if RUNNING_AS_APP:
     logging.basicConfig(level=logging.DEBUG)
@@ -405,12 +405,12 @@ def main():
 
     args = parser.parse_args()
 
-    if args.kafka_uri is None:
+    if not args.kafka_uri:
         logging.error('The URI for the Kafka service is required')
         logging.error('Set KAFKA_SERVICE_URI or use the -k switch')
         return -1
 
-    if args.schema_registry_url is None:
+    if not args.schema_registry_url:
         logging.error('The URL for the schema registry service is required')
         logging.error('Set SCHEMA_REGISTRY_URL or use the -s switch')
         return -1
