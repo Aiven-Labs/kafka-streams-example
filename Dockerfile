@@ -1,13 +1,29 @@
 # --- First stage: Get our app, work out its dependencies, create a JRE
-FROM eclipse-temurin:21-jdk-jammy AS builder
+FROM gradle:9.2.1-jdk21-jammy AS builder
+# See https://hub.docker.com/_/gradle for available images
+# This one is built on top of
+#    eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
 
-ENV FAT_JAR_NAME=FilterApp-uber.jar
+# Copy our gradle build environment over
+RUN mkdir app
+COPY app ./app/
 
-# Start with our ("released") fat JAR and our run script
-COPY $FAT_JAR_NAME ./
+RUN mkdir gradle
+COPY gradle ./gradle/
+
+COPY gradle.properties settings.gradle ./
+
+# And the run script we'll need in stage 2
 COPY run.sh ./
+
+# Start by building the app as a fat (uber) JAR
+# This gives us a smaller executable in stage 2
+RUN gradle clean uberJar --no-daemon
+
+ENV FAT_JAR_NAME=FilterApp-uber.jar
+COPY app/build/libs/$FAT_JAR_NAME ./
 
 # Unpack the contents of our fat JAR
 RUN mkdir temp && cd temp && jar xf ../$FAT_JAR_NAME

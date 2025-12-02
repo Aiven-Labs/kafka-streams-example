@@ -15,7 +15,7 @@ By default it reads from the topic `logistics_data_gen` and filters message to t
 It is designed to be run in a container - a `Dockerfile` and associated run
 script (`run.sh`) are provided.
 
-The project uses Gradle and Groovy for configuration.
+The project uses Gradle and Groovy for configuration and bulding.
 
 If you're using an Aiven for Apache Kafka service, then the Sample data
 generator for "Logistics" will write appropriate messages to the aforesaid
@@ -49,8 +49,8 @@ The Java app takes the following arguments:
 
 This is a two stage container file.
 
-The first stage takes a fat (uber) JAR for the program, which is assumed to be
-in the top level directory, and to be called `FilterApp-uber.jar`.
+The first stage builds a fat (uber) JAR for the program. This minimises the
+size of the executable to be passed to the second stage.
 
 It uses `jdeps` and `jlink` to work out the depedencies that are not in the
 JAR file, and extract a minimum JRE from the larger JRE in provided by the
