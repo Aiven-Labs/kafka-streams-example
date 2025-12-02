@@ -260,7 +260,11 @@ avn project switch <project-name>
 
 Set an environment variable for the service name - perhaps something like "kafka-streams-example"
 ```shell
-export KAFKA_SERVICE_NAME <service name>
+export KAFKA_SERVICE_NAME=<service name>
+```
+or for Fish shell
+```shell
+set -x KAFKA_SERVICE_NAME <service name>
 ```
 
 Create the service somewhere appropriate - change the actual location and so
@@ -279,21 +283,37 @@ Get the service URI for the new service
 ``` shell
 export KAFKA_SERVICE_URI=$(avn service get $KAFKA_SERVICE_NAME --format '{service_uri}')
 ```
+or for Fish shell
+```shell
+set -x KAFKA_SERVICE_URI (avn service get $KAFKA_SERVICE_NAME --format '{service_uri}')
+```
 
 Get the schema registry (Karapace) URL
 ```shell
 export SCHEMA_REGISTRY_URL=$(avn service get $KAFKA_SERVICE_NAME --json | jq -r '.connection_info.schema_registry_uri')
+```
+or for Fish shell
+```shell
+set -x SCHEMA_REGISTRY_URL (avn service get $KAFKA_SERVICE_NAME --json | jq -r '.connection_info.schema_registry_uri')
 ```
 
 Get the schema registry password
 ```shell
 export SCHEMA_REGISTRY_PASSWORD=$(avn service get $KAFKA_SERVICE_NAME --json | jq -r '.users[0].password')
 ```
+or for Fish shell
+```shell
+set -x SCHEMA_REGISTRY_PASSWORD (avn service get $KAFKA_SERVICE_NAME --json | jq -r '.users[0].password')
+```
 
 We assume the default username for the schema registry, so don't need to
 look that up, but if you do need it then you can get it with
 ```shell
 export SCHEMA_REGISTRY_USERNAME=$(avn service get $KAFKA_SERVICE_NAME --json | jq -r '.users[0].username')
+```
+or for Fish shell
+```shell
+set -x SCHEMA_REGISTRY_USERNAME (avn service get $KAFKA_SERVICE_NAME --json | jq -r '.users[0].username')
 ```
 
 Wait for it to reach Running state
@@ -332,6 +352,10 @@ ca.pem  service.cert  service.key
 Set the environment variables for the certificate file contents
 ```shell
 source prep.sh
+```
+or for Fish shell
+```shell
+source prep.fish
 ```
 
 And now you're ready to run the program, either via `rm -rf certs; ./run.sh`
