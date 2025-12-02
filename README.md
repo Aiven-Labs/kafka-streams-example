@@ -5,6 +5,9 @@
 This is an example program written in Java that uses Kafka Streams to filter
 and process Avro messages.
 
+> **Note** If you're looking for the main source file, it's at
+> [app/src/main/java/org/example/FilterApp.java](app/src/main/java/org/example/FilterApp.java)
+
 By default it reads from the topic `logistics_data_gen` and filters message to the topic
 `logistics_data_delivered`. Both topics must be on the same Kafka service.
 
