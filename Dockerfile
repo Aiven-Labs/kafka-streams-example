@@ -13,7 +13,7 @@ COPY app ./app/
 RUN mkdir gradle
 COPY gradle ./gradle/
 
-COPY gradle.properties settings.gradle ./
+COPY settings.gradle ./
 
 # And the run script we'll need in stage 2
 COPY run.sh ./
@@ -23,7 +23,7 @@ COPY run.sh ./
 RUN gradle clean uberJar --no-daemon
 
 ENV FAT_JAR_NAME=FilterApp-uber.jar
-COPY ./app/build/libs/$FAT_JAR_NAME ./
+RUN cp app/build/libs/$FAT_JAR_NAME ./
 
 # Unpack the contents of our fat JAR
 RUN mkdir temp && cd temp && jar xf ../$FAT_JAR_NAME
