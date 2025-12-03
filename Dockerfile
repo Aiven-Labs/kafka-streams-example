@@ -23,7 +23,7 @@ COPY run.sh ./
 RUN gradle clean uberJar --no-daemon
 
 ENV FAT_JAR_NAME=FilterApp-uber.jar
-COPY app/build/libs/$FAT_JAR_NAME ./
+COPY ./app/build/libs/$FAT_JAR_NAME ./
 
 # Unpack the contents of our fat JAR
 RUN mkdir temp && cd temp && jar xf ../$FAT_JAR_NAME
