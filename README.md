@@ -93,25 +93,6 @@ not leave the container.
 
 Finally it runs the fat Java JAR with the necessary arguments.
 
-## Building the program
-
-We use a fat (uber) JAR in the container, so that all of the programs
-non-standard dependencies (the ones not provided by the JRE) are frozen into the
-final executable.
-
-Build that fat JAR file with
-```shell
-gradle uberJar
-```
-
-(See `app/build.gradle` for the definition of the `uberJar` task.)
-
-If you want to run the app using the provided `run.sh` script, then you'll 
-also need to copy the result to the top-level directory
-```shell
-cp app/build/libs/FilterApp-uber.jar .
-```
-
 ## Running the container
 
 Download the URI and the certificates for the Kafka service.
@@ -172,6 +153,25 @@ Three of those environment variable arguments may be omitted and have defaults:
 * `SCHEMA_REGISTRY_USERNAME` - default `avnadmin`
 * `INPUT_TOPIC` - default `logistics_data_gen`
 * `OUTPUT_TOPIC` - default `logistics_data_delivered`
+
+## Building the program
+
+We use a fat (uber) JAR in the container, so that all of the programs
+non-standard dependencies (the ones not provided by the JRE) are frozen into the
+final executable.
+
+Build that fat JAR file with
+```shell
+gradle uberJar
+```
+
+(See `app/build.gradle` for the definition of the `uberJar` task.)
+
+If you want to run the app using the provided `run.sh` script, then you'll
+also need to copy the result to the top-level directory
+```shell
+cp app/build/libs/FilterApp-uber.jar .
+```
 
 ## Running `run.sh` locally
 
