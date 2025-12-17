@@ -16,7 +16,7 @@ By default it reads from the topic `logistics_data_gen` and filters message to t
   `trackingId` (instead of `tracking_id`), `carrier` and `manifest`.
 
 It is designed to be run in a container - a `Dockerfile` and associated run
-script (`run.sh`) are provided.
+scripts (`run_filter.sh` and `setup_auth`) are provided.
 
 The project uses Gradle and Groovy for configuration and bulding.
 
@@ -59,16 +59,17 @@ It uses `jdeps` and `jlink` to work out the depedencies that are not in the
 JAR file, and extract a minimum JRE from the larger JRE in provided by the
 operating system used in that first stage.
 
-The second stage then downloads `openssl` (used in the `run.sh`) and `rocksdb`
+The second stage then downloads `openssl` (used in the `setup_auth.sh`) and `rocksdb`
 (used by Kafka Streams - at least in it stateful KTable form - this might not
 be needed for our stateless program).
 
 It then copies over the minimal JRE prepared in the first stage, and the fat
-JAR itself, as well as the `run.sh` file, which it runs.
+JAR itself, as well as the `run_filter.sh` and `setup_auth.sh` files, and
+finally runs the `run_filter.sh` script.
 
-## The `run.sh` file
+## The `run_filter.sh` and `setup_auth.sh` files
 
-The `run.sh` file assumes it has the following environment variables as input:
+The `run_filter.sh` file assumes it has the following environment variables as input:
 
 - `KAFKA_SERVICE_URI` - the URI of the Kafka service we're using
 - `CA_PEM_CONTENTS` - the contents of the `ca.pem` file
@@ -84,14 +85,19 @@ The `run.sh` file assumes it has the following environment variables as input:
 - `OUTPUT_TOPIC` - the output topic name. **This is optional** and defaults to
   `logistics_data_delivered`.
 
-It puts the contents of the `CA_PEM_CONTENTS`, `SERVICE_CERT_CONTENTS` and
-`SERVICE_KEY_CONTENTS` environemnt variables into files of the
-appropriate name in a directory called `certs`. It then uses `openssl` to
-create a key store, and `keytool` to create a trust store. For both it uses a
-password generated with `openssl`. Note that this means that the password does
+It sources the `setup_auth.sh` script which:
+*  puts the contents of the `CA_PEM_CONTENTS`, `SERVICE_CERT_CONTENTS` and
+   `SERVICE_KEY_CONTENTS` environemnt variables into files of the appropriate
+   name in a directory called `certs`
+* generates a password using `openssl`
+* uses `openssl` to create a key store with that password
+* uses `keytool` to create a trust store with that password
+
+Note creating the password inside the script means that the password does
 not leave the container.
 
-Finally it runs the fat Java JAR with the necessary arguments.
+Finally the `run_filter.sh` script  runs the fat Java JAR with the necessary
+arguments.
 
 ## Running the container
 
@@ -167,22 +173,22 @@ gradle uberJar
 
 (See `app/build.gradle` for the definition of the `uberJar` task.)
 
-If you want to run the app using the provided `run.sh` script, then you'll
+If you want to run the app using the provided `run_filter.sh` script, then you'll
 also need to copy the result to the top-level directory
 ```shell
 cp app/build/libs/FilterApp-uber.jar .
 ```
 
-## Running `run.sh` locally
+## Running `run_filter.sh` locally
 
-It's possible to run the `run.sh` script locally, and indeed this is useful
+It's possible to run the `run_filter.sh` script locally, and indeed this is useful
 for testing. It's important to remember to delete the `certs` directory each
 time, as the password used for the trust and key stores is different each
 time. Remember to set the various environment variables first.
 
 So
 ```shell
-rm -rf certs && ./run.sh
+rm -rf certs && ./run_filter.sh
 ```
 
 ## Visualising the messages
@@ -358,5 +364,5 @@ or for Fish shell
 source prep.fish
 ```
 
-And now you're ready to run the program, either via `rm -rf certs; ./run.sh`
+And now you're ready to run the program, either via `rm -rf certs; ./run_filter.sh`
 or via Docker.
