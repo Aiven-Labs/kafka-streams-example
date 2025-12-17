@@ -15,8 +15,9 @@ COPY gradle ./gradle/
 
 COPY settings.gradle ./
 
-# And the run script we'll need in stage 2
+# And the run scripts we'll need in stage 2
 COPY run.sh ./
+COPY setup_auth.sh ./
 
 # Start by building the app as a fat (uber) JAR
 # This gives us a smaller executable in stage 2
