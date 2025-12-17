@@ -130,36 +130,33 @@ public class FilterApp {
 
         final KStream<String, logistics> sourceStream = builder.stream(config.get("input.topic.name").toString());
 
-        final KStream<String, logistics_delivered> filteredStream = sourceStream.flatMapValues(
-                new ValueMapper<logistics, Iterable<logistics_delivered>>() {
-            @Override
-            public Iterable<logistics_delivered> apply(logistics inputValue){
-                log.info("LOOKING AT: Value='{}'", inputValue);
-
-                if (!inputValue.getState().equals(KEEP_STATE)) {
-                    log.info("IGNORING: because state is {}", inputValue.getState());
-                    return Collections.emptyList();
-                }
-
-                // Only propagate some values.
-                // We don't bother with "state", since we already know it's "Delivered"
-                // We change the names "time_utc" to "timeUtc" and "tracking_id" to "trackingId"
-                // (although you can't tell that from the Java code, only from the schemas)
-                logistics_delivered outputValue = new logistics_delivered();
-                outputValue.setTimeUtc(inputValue.getTimeUtc());
-                outputValue.setTrackingId(inputValue.getTrackingId());
-                outputValue.setCarrier(inputValue.getCarrier());
-                outputValue.setManifest(inputValue.getManifest());
-                log.info("SENDING: Value='{}'", outputValue);
-                return Collections.singleton(outputValue);
-            }
-        });
-
-        // Write the filtered stream to the output topic using the output schema
-        filteredStream.to(
-                config.get("output.topic.name").toString(),
-                Produced.with(Serdes.String(), outputMessageSerde)
-        );
+        // 1. I don't really need to put the type information into each lambda (except the final `peek` where it does
+        //    help), but I feel it makes it more obvious what the control flow is.
+        //    For instance, I could do `.filter( (key, inputValue) -> inputValue.getState().equals(KEEP_STATE) )`
+        // 2. In a real production app, we don't need all three `peek` calls - but in an example and during development
+        //    they're quite nice for explicitly logging what is going on
+        sourceStream
+                .peek( (String key, logistics inputValue) -> log.info("LOOKING AT: Value='{}'", inputValue) )
+                .filter( (String key, logistics inputValue) -> inputValue.getState().equals(KEEP_STATE) )
+                .peek( ( String key, logistics inputValue) -> log.info("KEEPING: Value='{}'", inputValue) )
+                .mapValues( (logistics inputValue) -> {
+                            // Only propagate some values.
+                            // We don't bother with "state", since we already know it's "Delivered"
+                            // We change the names "time_utc" to "timeUtc" and "tracking_id" to "trackingId"
+                            // (although you can't tell that from the Java code, only from the schemas)
+                            logistics_delivered outputValue = new logistics_delivered();
+                            outputValue.setTimeUtc(inputValue.getTimeUtc());
+                            outputValue.setTrackingId(inputValue.getTrackingId());
+                            outputValue.setCarrier(inputValue.getCarrier());
+                            outputValue.setManifest(inputValue.getManifest());
+                            return outputValue;
+                        }
+                )
+                .peek( (String key, logistics_delivered outputValue) -> log.info("SENDING: Value='{}'", outputValue) )
+                .to(
+                        config.get("output.topic.name").toString(),
+                        Produced.with(Serdes.String(), outputMessageSerde)
+                );
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());
