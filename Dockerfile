@@ -16,7 +16,7 @@ COPY gradle ./gradle/
 COPY settings.gradle ./
 
 # And the run scripts we'll need in stage 2
-COPY run.sh ./
+COPY run_filter.sh ./
 COPY setup_auth.sh ./
 
 # Start by building the app as a fat (uber) JAR
@@ -78,7 +78,8 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Copy the entrypoint script and make it executable
 COPY run.sh ./
-RUN chmod +x ./run.sh
+RUN chmod +x ./run_filter.sh
+RUN chmod +x ./setup_auth.sh
 
 # Set the custom entrypoint
-CMD [ "./run.sh" ]
+CMD [ "./run_filter.sh" ]
