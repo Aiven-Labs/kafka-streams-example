@@ -95,9 +95,9 @@ Finally it runs the fat Java JAR with the necessary arguments.
 
 ## Building the program
 
-For simplicity in the container file, we build a fat (uber) JAR. This means
-that all of the programs non-standard dependencies (the ones not provided by
-the JRE) are frozen into the final executable.
+We use a fat (uber) JAR in the container, so that all of the programs
+non-standard dependencies (the ones not provided by the JRE) are frozen into the
+final executable.
 
 Build that fat JAR file with
 ```shell
@@ -106,14 +106,11 @@ gradle uberJar
 
 (See `app/build.gradle` for the definition of the `uberJar` task.)
 
-and copy the result to the top-level directory
+If you want to run the app using the provided `run.sh` script, then you'll 
+also need to copy the result to the top-level directory
 ```shell
 cp app/build/libs/FilterApp-uber.jar .
 ```
-
-For convenience there is already a `FilterApp-uber.jar` pre-built and
-committed to this repository - this means you can run the program without
-needing to build it.
 
 ## Running the container
 
