@@ -10,6 +10,10 @@ app/libs/
 # Any certificates directory from testing
 certs/
 
+# When testing, I copy JAR files into the root directory to run them
+# via run.sh
+*.jar
+
 # Python virtual environment
 venv/
 
