@@ -237,7 +237,12 @@ actual application.
 
 ## End to end example using Aiven for Kafka
 
-It's possible to do everything in this section using using the Aiven [web
+> **Note** For trying out this Kafka Streams app, a
+> [free Aiven for Kafka service](https://aiven.io/free-kafka)
+> will work just fine. The instructions below show how to use that, as well 
+> as how to use a paid service if that's more suitable.
+
+It's possible to do everything in this section using the Aiven [web
 console](https://console.aiven.io/), but for documentation purposes here I
 shall use the `avn` command line tool.
 
@@ -273,19 +278,55 @@ or for Fish shell
 set -x KAFKA_SERVICE_NAME <service name>
 ```
 
-Create the service somewhere appropriate - change the actual location and so
-on to suit
-```shell
-avn service create $KAFKA_SERVICE_NAME          \
-        --service-type kafka                    \
-        --cloud aws-eu-west-1                   \
-        --plan startup-4                        \
-        --no-project-vpc                        \
-        -c schema_registry=true                 \
-        -c kafka.auto_create_topics_enable=true
-```
+Create the Aiven for Kafka service. We'll show how to create a free or paid 
+service. There are notes about each command after the command.
 
-Get the service URI for the new service
+1. For trying out this app, a
+   [free Aiven for Kafka service](https://aiven.io/free-kafka)
+   will work just fine. Create the service using the following command:
+   ```shell
+   avn service create $KAFKA_SERVICE_NAME          \
+           --service-type kafka                    \
+           --cloud do-ams                          \
+           --plan free-0                           \
+           -c schema_registry=true                 \
+           -c kafka.auto_create_topics_enable=true
+   ```
+
+   > **Notes**
+   > 1. The details of how the free cloud and plan are specified at the command 
+   >    line may change. This is one case where it's actually simpler to do this
+   >    in the Aiven web console, as there you just choose the free 
+   >    Kafka tier and then what part of the world you want.
+   > 2. `-c schema_registry=true` says we want to enable the Karapace schema
+   >    registry. This is also free, and we need it to handle Avro messages.
+   > 3. `-c kafka.auto_create_topics_enable=true` says we want producers to
+   >    be able to create topics. You don't want this in production, but it's
+   >    often a good idea in development.
+
+2. If you prefer (or if you're already using your free Aiven for Kafka service 
+   for something else and don't want to add new topics to it), you can instead 
+   create a paid service. For that, use a command like the following:
+   ```shell
+   avn service create $KAFKA_SERVICE_NAME          \
+           --service-type kafka                    \
+           --cloud aws-eu-west-1                   \
+           --plan startup-4                        \
+           --no-project-vpc                        \
+           -c schema_registry=true                 \
+           -c kafka.auto_create_topics_enable=true
+   ```
+
+   > **Notes**
+   > 1. Choose a cloud and plan that match your needs. There's no need to go 
+   >    for anything above the minimum plan (`startup-4` in this case).
+   > 2. In the case of this cloud and region, I knew there was a VPC 
+   >    (virtual private cloud) available to my organization, so I needed
+   >    to tell the command I did not want to use it. It doesn't hurt to
+   >    specify this switch if there is no VPC.
+   > 3. The last two switches are the same as in the free example above.
+
+While that's running, get the service URI for the new service
 ``` shell
 export KAFKA_SERVICE_URI=$(avn service get $KAFKA_SERVICE_NAME --format '{service_uri}')
 ```
