@@ -123,15 +123,23 @@ export SCHEMA_REGISTRY_PASSWORD=<schema registry password>
 ```
 (the Fish shell equivalents are left as an exercise for Fish shell users:).)
 
-Set an environment variable to the content of each certificate file. You can
-do this by hand, or for convenience there's a shell script:
-```shell
-source prep.sh
-```
-or for Fish
-```shell
-source prep.fish
-```
+Set an environment variable to the content of each certificate file.
+
+> Typically,
+> 1. Download the certificate files for the Kafka service (`ca.pem`, 
+>    `service. cert` and `service.key`).
+>    For an Aiven for Kafka service you can do this from the **Connection 
+>    information** in the service Overview.
+> 2. Put the files into a directory called `certs` and use one of the
+>    convenience shell scripts to read the content of
+>    those files and set the environment variables:
+>    ```shell
+>    source prep.sh
+>    ```
+>    or for Fish
+>    ```shell
+>    source prep.fish
+>    ```
 
 Build the container image:
 ```shell
@@ -323,7 +331,7 @@ service. There are notes about each command after the command.
    > 2. In the case of this cloud and region, I knew there was a VPC 
    >    (virtual private cloud) available to my organization, so I needed
    >    to tell the command I did not want to use it. It doesn't hurt to
-   >    specify this switch if there is no VPC.
+   >    specify th
    > 3. The last two switches are the same as in the free example above.
 
 While that's running, get the service URI for the new service
