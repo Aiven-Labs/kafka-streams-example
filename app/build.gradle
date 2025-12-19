@@ -69,20 +69,33 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Do we still need this?
-tasks.register('copyDependencies', Copy) {
-    from(sourceSets.main.runtimeClasspath)
-    into('libs')
-}
-
-tasks.register('uberJar', Jar) {
+tasks.register('specificFilterUberJar', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
-        attributes 'Main-Class': 'org.example.FilterApp'
+        attributes 'Main-Class': 'org.example.SpecificFilterApp'
     }
 
-    archiveBaseName = 'FilterApp';
+    archiveBaseName = 'SpecificFilterApp';
+
+    from sourceSets.main.output
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+}
+
+tasks.register('genericFilterUberJar', Jar) {
+    archiveClassifier = 'uber'
+
+    manifest {
+        attributes 'Main-Class': 'org.example.GenericFilterApp'
+    }
+
+    archiveBaseName = 'GenericFilterApp';
 
     from sourceSets.main.output
 

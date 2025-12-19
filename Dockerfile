@@ -6,6 +6,12 @@ FROM gradle:9.2.1-jdk21-jammy AS builder
 
 WORKDIR /app
 
+# Define which app we're building
+# Note that you can override this at the `docker build` command line
+# with `--build-arg APP_NAME=<different name>`
+# (see https://docs.docker.com/build/building/variables/#env-usage-example)
+ENV APP_NAME="SpecificFilterApp"
+
 # Copy our gradle build environment over
 RUN mkdir app
 COPY app ./app/
@@ -16,14 +22,14 @@ COPY gradle ./gradle/
 COPY settings.gradle ./
 
 # And the run scripts we'll need in stage 2
-COPY run_filter.sh ./
+COPY run.sh ./
 COPY setup_auth.sh ./
 
 # Start by building the app as a fat (uber) JAR
 # This gives us a smaller executable in stage 2
 RUN gradle clean uberJar --no-daemon
 
-ENV FAT_JAR_NAME=FilterApp-uber.jar
+ENV FAT_JAR_NAME=${APP_NAME}-uber.jar
 RUN cp app/build/libs/$FAT_JAR_NAME ./
 
 # Unpack the contents of our fat JAR
@@ -70,7 +76,7 @@ RUN apt-get autoremove -y \
 
 # Copy the custom JRE and application artifacts from the builder stage
 COPY --from=builder /app/custom-jre /usr/lib/jvm/custom-jre
-COPY --from=builder /app/FilterApp-uber.jar ./
+COPY --from=builder /app/${APP_NAME}-uber.jar ./
 COPY --from=builder /app/run.sh ./
 
 ENV JAVA_HOME="/usr/lib/jvm/custom-jre"
@@ -78,8 +84,8 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Copy the entrypoint script and make it executable
 COPY run.sh ./
-RUN chmod +x ./run_filter.sh
+RUN chmod +x ./run.sh
 RUN chmod +x ./setup_auth.sh
 
 # Set the custom entrypoint
-CMD [ "./run_filter.sh" ]
+CMD [ "./run.sh" ]

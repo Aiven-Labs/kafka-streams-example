@@ -17,6 +17,9 @@ export SCHEMA_REGISTRY_USERNAME=${SCHEMA_REGISTRY_USERNAME:-avnadmin}
 # otherwise we've got defaults
 export INPUT_TOPIC=${INPUT_TOPIC:-logistics_data_gen}
 export OUTPUT_TOPIC=${OUTPUT_TOPIC:-logistics_data_delivered}
+#
+# We need the name of the app (its class name), but we've got a default
+export APP_NAME=${APP_NAME:-SpecificFilterApp}
 
 source ./setup_auth.sh
 
@@ -32,5 +35,5 @@ exec java \
     -DSCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD       \
     -DINPUT_TOPIC=$INPUT_TOPIC                                 \
     -DOUTPUT_TOPIC=$OUTPUT_TOPIC                               \
-    -jar ./FilterApp-uber.jar \
-    com.example.FilterApp "$@"
+    -jar ./${APP_NAME}-uber.jar \
+    com.example.${APP_NAME} "$@"
