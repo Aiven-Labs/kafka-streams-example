@@ -1,28 +1,30 @@
 package org.example;
 
+import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-// It would be nice if the Avro class names followed Java capitalisation conventions,
-// but unfortunately that is not the case - we'll just have to live with it
-// (the `logistics` name is set by the Aiven data generator, and it seems sensible
-// to keep the `logistics_delivered` name similar)
-import data.gen.avro.logistics;            // The class generated for our input messages
-import data.gen.avro.logistics_delivered;  // And the class generated for our output messages
+// The input Avro messages follow a schema called `logistics`, which doesn't
+// follow Java's capitalisation rules for classes. Regardless, we'll name
+// the output schema `logistics_delivered` for consistency.
+import data.gen.avro.logistics_delivered;  // The class generated for our output messages
 
-import org.example.Config;
 
 /**
  * This app is an example of using Kafka Streams to filter a Logistics stream
@@ -57,18 +59,26 @@ public class GenericFilterApp {
                 config.get("schema.registry.basic.auth.user.info").toString()
         );
 
-        // Configure the Serde to be used for the input Avro messages
-        // Keys remain strings (the default key type), values are Avro objects.
-        final SpecificAvroSerde<logistics> inputMessageSerde = new SpecificAvroSerde<>();
-        inputMessageSerde.configure(serdeConfig, false);  // `false` means it's a value Serde
+        // We're using a generic Serde for the input message values, and the library code
+        // will download the schema from the schema repository at runtime, using the schema ID
+        // at the start of each (Confluent-style) Avro message.
+        // NOTE that I'm assuming that this is cached, and it doesn't retrieve the schema for
+        // each and every message.
+        final Serde<GenericRecord> inputMessageSerde = new GenericAvroSerde();
+        inputMessageSerde.configure(serdeConfig, false); // `false` means it's a value Serde
 
-        // And similarly for the output
+        // Since the output messages have a different schema, we need a specific Serde for them
+        // We let that get built from the .avsc file in the normal manner, so we've got a Java class to hand
         final SpecificAvroSerde<logistics_delivered> outputMessageSerde = new SpecificAvroSerde<>();
         outputMessageSerde.configure(serdeConfig, false); // `false` means it's a value Serde
 
         final StreamsBuilder builder = new StreamsBuilder();
 
-        final KStream<String, logistics> sourceStream = builder.stream(config.get("input.topic.name").toString());
+        // Our source stream is read from the input topic using the (input) generic Avro serde
+        KStream<String, GenericRecord> sourceStream = builder.stream(
+                config.get("input.topic.name").toString(),
+                Consumed.with(Serdes.String(), inputMessageSerde)
+        );
 
         // Read from the input stream, filter out any messages where the "state" is not KEEP_STATE, and then
         // create new messages using a subset of the original message values. Write the results to the output topic.
@@ -80,19 +90,37 @@ public class GenericFilterApp {
         // 2. In a real production app, we don't need all three `peek` calls - but in an example and during development
         //    they're quite nice for explicitly logging what is going on
         sourceStream
-                .peek( (String key, logistics inputValue) -> log.info("LOOKING AT: Value='{}'", inputValue) )
-                .filter( (String key, logistics inputValue) -> inputValue.getState().equals(KEEP_STATE) )
-                .peek( ( String key, logistics inputValue) -> log.info("KEEPING: Value='{}'", inputValue) )
-                .mapValues( (logistics inputValue) -> {
+                .peek( (String key, GenericRecord inputValue) -> log.info("LOOKING AT: Value='{}'", inputValue) )
+                .filter( (String key, GenericRecord inputValue) -> inputValue.get("state").toString().equals(KEEP_STATE) )
+                .peek( ( String key, GenericRecord inputValue) -> log.info("KEEPING: Value='{}'", inputValue) )
+                .mapValues( (GenericRecord inputValue) -> {
                             // Only propagate some values.
-                            // We don't bother with "state", since we already know it's "Delivered"
+                            // We don't bother with "state", since we already know it's "Delivered".
                             // We change the names "time_utc" to "timeUtc" and "tracking_id" to "trackingId"
-                            // (although you can't tell that from the Java code, only from the schemas)
+                            // (although you can't tell that from the Java code, only from the output schema).
+                            // If values are null or not of a type we expect, ignore them.
+                            // For strings, beware that they're actually a Utf8 class.
                             logistics_delivered outputValue = new logistics_delivered();
-                            outputValue.setTimeUtc(inputValue.getTimeUtc());
-                            outputValue.setTrackingId(inputValue.getTrackingId());
-                            outputValue.setCarrier(inputValue.getCarrier());
-                            outputValue.setManifest(inputValue.getManifest());
+                            var timeUtc = inputValue.get("time_utc");
+                            log.info("Read timeUtc '{}'", timeUtc);
+                            if (timeUtc instanceof Number) {
+                                outputValue.setTimeUtc((Long) timeUtc);
+                            }
+                            var trackingId = inputValue.get("tracking_id");
+                            log.info("Read trackingId {} '{}'", trackingId.getClass().toString(), trackingId);
+                            if (trackingId instanceof org.apache.avro.util.Utf8) {
+                                outputValue.setTrackingId(trackingId.toString());
+                            }
+                            var carrier = inputValue.get("carrier");
+                            log.info("Read carrier '{}'", carrier);
+                            if (carrier instanceof org.apache.avro.util.Utf8) {
+                                outputValue.setCarrier(carrier.toString());
+                            }
+                            var manifest = inputValue.get("manifest");
+                            log.info("Read manifest '{}'", manifest);
+                            if (manifest instanceof List) {
+                                outputValue.setManifest((List<String>) manifest);
+                            }
                             return outputValue;
                         }
                 )
