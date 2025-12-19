@@ -1,5 +1,8 @@
 # Kafka Streams example
 
+> **Note** At the moment the code in this repository is under active
+> development. Things will change.
+
 ## What this does
 
 This is an example program written in Java that uses Kafka Streams to filter
@@ -25,7 +28,7 @@ generator for "Logistics" will write appropriate messages to the aforesaid
 `logistics_data_gen` topic, which this program will then filter, so that's a
 good way of demonstrating that the program works.
 
-> **Note** There is an older version of this code for handling JSON messages
+> **Note** There is a much older version of this code for handling JSON messages
 > on the `json` branch.
 
 ## Command line arguments for the Java app
