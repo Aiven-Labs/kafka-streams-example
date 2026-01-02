@@ -106,3 +106,41 @@ tasks.register('GenericFilterUberJar', Jar) {
         configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
     }
 }
+
+tasks.register('GenericCopyUberJar', Jar) {
+    archiveClassifier = 'uber'
+
+    manifest {
+        attributes 'Main-Class': 'org.example.GenericCopyApp'
+    }
+
+    archiveBaseName = 'GenericCopyApp';
+
+    from sourceSets.main.output
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+}
+
+tasks.register('GenericLogUberJar', Jar) {
+    archiveClassifier = 'uber'
+
+    manifest {
+        attributes 'Main-Class': 'org.example.GenericLogApp'
+    }
+
+    archiveBaseName = 'GenericLogApp';
+
+    from sourceSets.main.output
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+}
