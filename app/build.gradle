@@ -69,7 +69,7 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-tasks.register('SpecificFilterUberJar', Jar) {
+tasks.register('SpecificFilterApp-uber')
     archiveClassifier = 'uber'
 
     manifest {
@@ -88,7 +88,7 @@ tasks.register('SpecificFilterUberJar', Jar) {
     }
 }
 
-tasks.register('GenericFilterUberJar', Jar) {
+tasks.register('GenericFilterApp-uber', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
@@ -107,7 +107,7 @@ tasks.register('GenericFilterUberJar', Jar) {
     }
 }
 
-tasks.register('GenericCopyUberJar', Jar) {
+tasks.register('GenericCopyApp-uber', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
@@ -126,7 +126,7 @@ tasks.register('GenericCopyUberJar', Jar) {
     }
 }
 
-tasks.register('GenericLogUberJar', Jar) {
+tasks.register('GenericLogApp-uber', Jar) {
     archiveClassifier = 'uber'
 
     manifest {

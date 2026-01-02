@@ -19,7 +19,7 @@ export INPUT_TOPIC=${INPUT_TOPIC:-logistics_data_gen}
 export OUTPUT_TOPIC=${OUTPUT_TOPIC:-logistics_data_delivered}
 #
 # We need the name of the app (its class name), but we've got a default
-export APP_NAME=${APP_NAME:-SpecificFilterApp}
+export APP_NAME=${APP_NAME:-GenericLogApp}
 
 source ./setup_auth.sh
 

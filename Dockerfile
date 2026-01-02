@@ -10,7 +10,7 @@ WORKDIR /app
 # Note that you can override this at the `docker build` command line
 # with `--build-arg APP_NAME=<different name>`
 # (see https://docs.docker.com/build/building/variables/#env-usage-example)
-ENV APP_NAME="SpecificFilterApp"
+ENV APP_NAME="GenericLogApp"
 
 # Copy our gradle build environment over
 RUN mkdir app
@@ -27,7 +27,7 @@ COPY setup_auth.sh ./
 
 # Start by building the app as a fat (uber) JAR
 # This gives us a smaller executable in stage 2
-RUN gradle clean uberJar --no-daemon
+RUN gradle clean ${APP_NAME}-uber --no-daemon
 
 ENV FAT_JAR_NAME=${APP_NAME}-uber.jar
 RUN cp app/build/libs/$FAT_JAR_NAME ./
