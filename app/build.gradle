@@ -69,14 +69,14 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-tasks.register('SpecificFilterApp-uber')
+tasks.register('SpecificFilterAppUberJar', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
         attributes 'Main-Class': 'org.example.SpecificFilterApp'
     }
 
-    archiveBaseName = 'SpecificFilterApp';
+    archiveBaseName = 'SpecificFilterApp'
 
     from sourceSets.main.output
 
@@ -88,14 +88,14 @@ tasks.register('SpecificFilterApp-uber')
     }
 }
 
-tasks.register('GenericFilterApp-uber', Jar) {
+tasks.register('GenericFilterAppUberJar', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
         attributes 'Main-Class': 'org.example.GenericFilterApp'
     }
 
-    archiveBaseName = 'GenericFilterApp';
+    archiveBaseName = 'GenericFilterApp'
 
     from sourceSets.main.output
 
@@ -107,14 +107,14 @@ tasks.register('GenericFilterApp-uber', Jar) {
     }
 }
 
-tasks.register('GenericCopyApp-uber', Jar) {
+tasks.register('GenericCopyAppUberJar', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
         attributes 'Main-Class': 'org.example.GenericCopyApp'
     }
 
-    archiveBaseName = 'GenericCopyApp';
+    archiveBaseName = 'GenericCopyApp'
 
     from sourceSets.main.output
 
@@ -126,14 +126,14 @@ tasks.register('GenericCopyApp-uber', Jar) {
     }
 }
 
-tasks.register('GenericLogApp-uber', Jar) {
+tasks.register('GenericLogAppUberJar', Jar) {
     archiveClassifier = 'uber'
 
     manifest {
         attributes 'Main-Class': 'org.example.GenericLogApp'
     }
 
-    archiveBaseName = 'GenericLogApp';
+    archiveBaseName = 'GenericLogApp'
 
     from sourceSets.main.output
 
