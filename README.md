@@ -58,7 +58,8 @@ associated run scripts (`run.sh` and `setup_auth`) are provided.
 
 By default the container and scripts will run the `GenericLogApp`, which 
 should work for any Avro messages. You can choose a different app using the 
-`APP_NAME` environment variable.
+`APP_NAME` environment variable, either at the `docker build` command line, 
+or by editing the `Dockerfile` itself.
 
 The project uses Gradle and Groovy for configuration and building.
 
