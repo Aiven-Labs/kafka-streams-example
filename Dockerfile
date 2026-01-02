@@ -27,7 +27,7 @@ COPY setup_auth.sh ./
 
 # Start by building the app as a fat (uber) JAR
 # This gives us a smaller executable in stage 2
-RUN gradle clean ${APP_NAME}-uber --no-daemon
+RUN gradle clean ${APP_NAME}UberJar --no-daemon
 
 ENV FAT_JAR_NAME=${APP_NAME}-uber.jar
 RUN cp app/build/libs/$FAT_JAR_NAME ./
@@ -62,9 +62,6 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 # Install openssl (for run.sh) and RocksDB library (for Kafka Streams)
-##RUN apk update && \
-##    apk add --no-cache openssl rocksdb && \
-##    rm -rf /var/cache/apk/*
 RUN apt-get update \
     && apt-get install -y openssl \
     && apt-get install -y librocksdb7.8
@@ -76,7 +73,8 @@ RUN apt-get autoremove -y \
 
 # Copy the custom JRE and application artifacts from the builder stage
 COPY --from=builder /app/custom-jre /usr/lib/jvm/custom-jre
-COPY --from=builder /app/${APP_NAME}-uber.jar ./
+COPY --from=builder /app/*-uber.jar ./
+COPY --from=builder /app/setup_auth.sh ./
 COPY --from=builder /app/run.sh ./
 
 ENV JAVA_HOME="/usr/lib/jvm/custom-jre"
