@@ -104,10 +104,17 @@ Set an environment variable to the content of each certificate file.
 >    source prep.fish
 >    ```
 
-Build the container image:
-```shell
-docker build -t appimage .
-```
+1. To build a container image for the default `GenericLogApp`:
+
+    ```shell
+    docker build -t appimage .
+    ```
+
+2. To build a container image for a specific app (for instance, 
+   `GenericFilterApp`):
+    ```shell
+    docker build --build-arg APP_NAME=GenericFilterApp -t appimage .
+    ```
 
 Run the container image:
 ```shell
@@ -121,7 +128,6 @@ docker run -d --name kafka-streams-container -p 3000:3000 \
         -e SCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD \
         -e INPUT_TOPIC=$INPUT_TOPIC \
         -e OUTPUT_TOPIC=$OUTPUT_TOPIC \
-        -e APP_NAME=GenericFilterApp \
         appimage
 ```
 
@@ -132,13 +138,13 @@ leave them off if you're happy with the default:
 * `SCHEMA_REGISTRY_USERNAME` - default `avnadmin`
 * `INPUT_TOPIC` - default `logistics_data_gen`
 * `OUTPUT_TOPIC` - default `logistics_data_delivered`
-* `APP_NAME` - default `GenericLogApp`
 
 ## Command line arguments for the Java app
 
 All variants of the Java app take the following arguments (of course 
 `OUTPUT_TOPIC` is not used by the `Log` app). Common code to handle these is in
-[Config.java](app/src/main/java/org/example/Config.java).
+[Config.java](app/src/main/java/org/example/Config.java). The names chosen 
+match the environment variables used by the container file and `run.sh`.
 
 * `-DKAFKA_SERVICE_URI` - the URI for the Kafka service.
 * `-DSSL_TRUSTSTORE_LOCATION` - the directory containing the `client.truststore.jks` file.
@@ -178,7 +184,9 @@ finally runs the `run.sh` script.
 
 ## The `run.sh` and `setup_auth.sh` files
 
-The `run.sh` file expects the following environment variables as input:
+The `run.sh` file expects the following environment variables as input 
+you'll recognise all but `APP_NAME` from the instructions on running the 
+container and the Java app itself):
 
 - `KAFKA_SERVICE_URI` - the URI of the Kafka service we're using
 - `CA_PEM_CONTENTS` - the contents of the `ca.pem` file
@@ -218,15 +226,15 @@ final executable.
 
 You can build that fat JAR file with
 ```shell
-gradle $APP_NAME-uber
+gradle ${APP_NAME}UberJar
 ```
 where `$APP_NAME` is one of `GenericLogApp`, `GenericCopyApp`, 
 `GenericFilterApp` or `SpecificFilterApp` -- for instance:
 ```shell
-gradle SpecificFilterApp-uber
+gradle SpecificFilterAppUberJar
 ```
 
-(See `app/build.gradle` for the definition of the `-uber` tasks.)
+(See `app/build.gradle` for the definition of the `UberJar` tasks.)
 
 If you want to run the app using the provided `run.sh` script, then you'll
 also need to copy the result to the top-level directory
