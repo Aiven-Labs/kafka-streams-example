@@ -18,7 +18,7 @@ repositories {
     mavenCentral()
     // Add Confluent dependencies for Schema Registry client and Avro Serdes
     maven {
-        url "https://packages.confluent.io/maven/"
+        url = "https://packages.confluent.io/maven/"
     }
 }
 
@@ -31,11 +31,9 @@ java {
 
 dependencies {
     implementation 'org.apache.kafka:kafka-streams:3.6.0'
-    //implementation 'org.apache.kafka:kafka-streams:3.8.0'
 
     // Confluent Avro Serdes (which is compatible with Karapace)
     implementation 'io.confluent:kafka-streams-avro-serde:7.6.1'
-    //implementation 'io.confluent:kafka-streams-avro-serde:8.1.0'
 
     // Avro dependency (for generated classes)
     implementation 'org.apache.avro:avro:1.11.3'
@@ -144,3 +142,9 @@ tasks.register('GenericLogAppUberJar', Jar) {
         configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
     }
 }
+
+/*
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['-Xlint:unchecked']
+}
+*/
