@@ -7,10 +7,10 @@ FROM gradle:9.2.1-jdk21-jammy AS builder
 WORKDIR /app
 
 # Define which app we're building
-# Note that you can override this at the `docker build` command line
+# You can override this at the `docker build` command line
 # with `--build-arg APP_NAME=<different name>`
 # (see https://docs.docker.com/build/building/variables/#env-usage-example)
-ENV APP_NAME="GenericLogApp"
+ARG APP_NAME="GenericLogApp"
 
 # Copy our gradle build environment over
 RUN mkdir app
@@ -79,6 +79,14 @@ COPY --from=builder /app/run.sh ./
 
 ENV JAVA_HOME="/usr/lib/jvm/custom-jre"
 ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# ARG values are not persisted into the run time (that is, our `run.sh`)
+# So first get the ARG value with the same value as in the first stage
+# (if we don't do this, it won't be available, as ARG values don't last
+# past the end of a build stage)
+ARG APP_NAME
+# And then set an ENV value to that value
+ENV APP_NAME=$APP_NAME
 
 # Copy the entrypoint script and make it executable
 COPY run.sh ./
