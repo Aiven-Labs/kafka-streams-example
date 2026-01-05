@@ -1,3 +1,10 @@
+# --- Set ARG values for use in the following build stages
+# We use this value to specify which app we're building
+# You can override this at the `docker build` command line
+# with `--build-arg APP_NAME=<different name>`
+# (see https://docs.docker.com/build/building/variables/#env-usage-example)
+ARG APP_NAME="GenericFilterApp"
+
 # --- First stage: Get our app, work out its dependencies, create a JRE
 FROM gradle:9.2.1-jdk21-jammy AS builder
 # See https://hub.docker.com/_/gradle for available images
@@ -6,11 +13,9 @@ FROM gradle:9.2.1-jdk21-jammy AS builder
 
 WORKDIR /app
 
-# Define which app we're building
-# You can override this at the `docker build` command line
-# with `--build-arg APP_NAME=<different name>`
-# (see https://docs.docker.com/build/building/variables/#env-usage-example)
-ARG APP_NAME="GenericLogApp"
+# ARG values do not persist over FROM boundaries
+# We need to explicitly reference it again to make it available
+ARG APP_NAME
 
 # Copy our gradle build environment over
 RUN mkdir app
@@ -71,22 +76,20 @@ RUN apt-get autoremove -y \
     && apt-get autoclean -y \
     && rm -rf /var/lib/apt/lists/*
 
+# ARG values are not persisted into the run time (that is, our `run.sh`)
+# So first get the ARG value as we did in the first stage
+ARG APP_NAME
+# And then set an ENV value to that value
+ENV APP_NAME=$APP_NAME
+
 # Copy the custom JRE and application artifacts from the builder stage
 COPY --from=builder /app/custom-jre /usr/lib/jvm/custom-jre
-COPY --from=builder /app/*-uber.jar ./
+COPY --from=builder /app/$APP_NAME-uber.jar ./
 COPY --from=builder /app/setup_auth.sh ./
 COPY --from=builder /app/run.sh ./
 
 ENV JAVA_HOME="/usr/lib/jvm/custom-jre"
 ENV PATH="$JAVA_HOME/bin:$PATH"
-
-# ARG values are not persisted into the run time (that is, our `run.sh`)
-# So first get the ARG value with the same value as in the first stage
-# (if we don't do this, it won't be available, as ARG values don't last
-# past the end of a build stage)
-ARG APP_NAME
-# And then set an ENV value to that value
-ENV APP_NAME=$APP_NAME
 
 # Copy the entrypoint script and make it executable
 COPY run.sh ./
