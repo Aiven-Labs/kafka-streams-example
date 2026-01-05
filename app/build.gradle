@@ -42,8 +42,9 @@ dependencies {
     implementation 'org.slf4j:slf4j-simple:2.0.13'
 
     // Use JUnit Jupiter for testing.
-    testImplementation libs.junit.jupiter
-
+    // 1. testImplementation libs.junit.jupiter
+    //testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
+    testImplementation('org.junit.jupiter:junit-jupiter:6.0.1')  // 6.0.1 seems to be the latest version
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -56,15 +57,28 @@ sourceSets {
     }
 }
 
-
+// Set the default application, which will be run by `./gradlew run`
+// (It isn't clear we need this for our purposes - it may get removed later on)
 application {
     // Define the main class for the application.
-    mainClass = 'org.example.FilterApp'
+    mainClass = 'org.example.GenericFilterApp'
+}
+
+// It's quite useful to get slightly better warning messages from the compiler
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['-Xlint:unchecked']
 }
 
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+    // See https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/testing/logging/TestLoggingContainer.html
+    // for the documentation for `testLogging`
+    testLogging {
+        events "passed", "skipped", "failed"
+        // A more complete list would be:
+        //events "failed", "passed", "skipped", "standardError","standardOut", "started"
+    }
 }
 
 tasks.register('SpecificFilterAppUberJar', Jar) {
@@ -142,9 +156,3 @@ tasks.register('GenericLogAppUberJar', Jar) {
         configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
     }
 }
-
-/*
-tasks.withType(JavaCompile) {
-    options.compilerArgs += ['-Xlint:unchecked']
-}
-*/
