@@ -1,4 +1,4 @@
-# Kafka Streams example
+# Apache Kafka® Streams example applications for Avro
 
 ## What is here
 
