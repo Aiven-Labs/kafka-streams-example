@@ -2,15 +2,18 @@
 
 ## What is here
 
-This repository contains four example Kafka Streams applications, which read 
-and process Avro messages. They demonstrate use of Generic and Specific Avro 
-Serdes, logging, copying and filtering messages.
+This repository contains four example Apache Kafka® Streams applications, which
+read and process [Apache Avro™](https://avro.apache.org/) messages. They
+demonstrate use of Generic and Specific Avro Serdes, logging, copying and
+filtering messages.
 
 All default to reading from a topic called `logistics_data_gen`.
 
 All message values are assume to be in Confluent style Avro, with the schema id
-prepended to each value. This means that the Serde can look the schema up in a
-schema registry, and all the apps take advantage of that.
+prepended to each value (See the Confluent 
+[Wire format](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format)
+documentation for details of how this works). This means that the Serde can look
+the schema up in a schema registry, and all the apps take advantage of that.
 
 1. [GenericLogApp.java](app/src/main/java/org/example/GenericLogApp.java)
 
