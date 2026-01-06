@@ -102,22 +102,18 @@ public class GenericFilterApp {
                             // For strings, beware that they're actually a Utf8 class.
                             logistics_delivered outputValue = new logistics_delivered();
                             var timeUtc = inputValue.get("time_utc");
-                            log.info("Read timeUtc '{}'", timeUtc);
                             if (timeUtc instanceof Number) {
                                 outputValue.setTimeUtc((Long) timeUtc);
                             }
                             var trackingId = inputValue.get("tracking_id");
-                            log.info("Read trackingId {} '{}'", trackingId.getClass().toString(), trackingId);
                             if (trackingId instanceof org.apache.avro.util.Utf8) {
                                 outputValue.setTrackingId(trackingId.toString());
                             }
                             var carrier = inputValue.get("carrier");
-                            log.info("Read carrier '{}'", carrier);
                             if (carrier instanceof org.apache.avro.util.Utf8) {
                                 outputValue.setCarrier(carrier.toString());
                             }
                             var manifest = inputValue.get("manifest");
-                            log.info("Read manifest '{}'", manifest);
                             if (manifest instanceof List) {
                                 outputValue.setManifest((List<String>) manifest);
                             }
