@@ -46,6 +46,10 @@ dependencies {
     //testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
     testImplementation('org.junit.jupiter:junit-jupiter:6.0.1')  // 6.0.1 seems to be the latest version
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Test dependencies
+    // https://github.com/webcompere/system-stubs
+    testImplementation 'uk.org.webcompere:system-stubs-jupiter:2.1.8'
 }
 
 // Indicate where our Avro .avsc file is to be found (the default is "src/main/avro")
