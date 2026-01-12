@@ -50,6 +50,8 @@ dependencies {
     // Test dependencies
     // https://github.com/webcompere/system-stubs
     testImplementation 'uk.org.webcompere:system-stubs-jupiter:2.1.8'
+    testImplementation 'org.apache.kafka:kafka-streams-test-utils:2.2.0'
+    testImplementation 'io.confluent:kafka-json-schema-serializer:6.2.1'  // what version is sensible?
 }
 
 // Indicate where our Avro .avsc file is to be found (the default is "src/main/avro")
