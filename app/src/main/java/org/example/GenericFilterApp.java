@@ -146,7 +146,7 @@ public class GenericFilterApp {
 
                                  Doing the conversion by hand as follows works and keeps the compiler happy
                                  */
-                                List<String> strings = {};
+                                List<String> strings = new ArrayList<>();
                                 for (Object obj : manifestList)
                                 {
                                     try {
