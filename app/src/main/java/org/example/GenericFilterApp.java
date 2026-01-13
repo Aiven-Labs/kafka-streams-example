@@ -14,10 +14,7 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 // The input Avro messages follow a schema called `logistics`, which doesn't
@@ -39,6 +36,14 @@ public class GenericFilterApp {
 
     // Define the state we are filtering on
     private static final String KEEP_STATE = "Delivered";
+
+    // We want to expose the topology for use in our unit tests
+    Topology topology = null;
+
+    public Topology getTopology()
+    {
+        return topology;
+    }
 
     public static void main(String[] args) {
         Properties config = Config.getConfig();
@@ -119,7 +124,38 @@ public class GenericFilterApp {
                             var manifest = inputValue.get("manifest");
                             log.info("Read manifest '{}'", manifest);
                             if (manifest instanceof List) {
-                                outputValue.setManifest((List<String>) manifest);
+                                List manifestList = (List) manifest;
+                                /*
+                                If I just call `outputValue.setManifest((List<String>) manifestList)` then it
+                                reasonably enough warns me that its an "[unchecked] unchecked cast" because it
+                                only knows that the value is a List, not a List<String>.
+
+                                I'd hoped to be able to do:
+
+                                List<String> strings = manifestList.stream()
+                                       .map(String::valueOf)
+                                       .toList();
+                                 but that just gives me a scarier warning
+
+                                   warning: [unchecked] unchecked call to <R>map(Function<? super T,? extends R>) as a member of the raw type Stream
+                                            .map(String::valueOf)
+                                                ^
+                                   where R,T are type-variables:
+                                     R extends Object declared in method <R>map(Function<? super T,? extends R>)
+                                     T extends Object declared in interface Stream
+
+                                 Doing the conversion by hand as follows works and keeps the compiler happy
+                                 */
+                                List<String> strings = {};
+                                for (Object obj : manifestList)
+                                {
+                                    try {
+                                        strings.add(obj.toString());
+                                    } catch (ClassCastException e) {
+                                        ; // ignore the element
+                                    }
+                                }
+                                outputValue.setManifest(strings);
                             }
                             return outputValue;
                         }
@@ -130,7 +166,7 @@ public class GenericFilterApp {
                         Produced.with(Serdes.String(), outputMessageSerde)
                 );
 
-        final Topology topology = builder.build();
+        topology = builder.build();
         System.out.println(topology.describe());
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), config);
