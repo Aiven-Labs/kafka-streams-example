@@ -13,6 +13,8 @@ import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
@@ -21,7 +23,6 @@ import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,7 +72,7 @@ class SetupMockSchemaRepository {
 }
 
 @ExtendWith(SystemStubsExtension.class)
-class GenericFilterAppTest {
+class GenericFilterAppTests {
 
     // After we've specified this, each test should unset any System property changes when it ends
     @SystemStub
@@ -79,6 +80,12 @@ class GenericFilterAppTest {
 
     static final String inputTopicName = "logistics_data_gen";
     static final String outputTopicName = "logistics_data_delivered";
+
+    static TopologyTestDriver testDriver;
+
+    static TestInputTopic<String, logistics> inputTopic;
+    static TestOutputTopic<String, logistics_delivered> outputTopic;
+
 
     /** Set some standard test values as system properties */
     static void setProperties()
@@ -94,10 +101,8 @@ class GenericFilterAppTest {
         System.setProperty("OUTPUT_TOPIC", outputTopicName);       // the default
     }
 
-    @Test
-    @DisplayName("Playing with GenericFilterApp")
-    void testGenericFilterApp()
-    {
+    @BeforeAll
+    static void setup() {
         setProperties();
 
         Properties config = Config.getConfig();
@@ -106,7 +111,7 @@ class GenericFilterAppTest {
         SetupMockSchemaRepository.registerSchemas();
 
         Topology topology = GenericFilterApp.buildTopology(config, serdeConfig);
-        var testDriver = new TopologyTestDriver(topology, config);
+        testDriver = new TopologyTestDriver(topology, config);
 
         SpecificAvroSerde<logistics> inputSerde = new SpecificAvroSerde<>();
         inputSerde.configure(serdeConfig, false);  // Just for the value, not the key
@@ -114,9 +119,19 @@ class GenericFilterAppTest {
         SpecificAvroSerde<logistics_delivered> outputSerde = new SpecificAvroSerde<>();
         outputSerde.configure(serdeConfig, false); // just for the value
 
-        TestInputTopic<String, logistics> inputTopic = testDriver.createInputTopic(inputTopicName, Serdes.String().serializer(), inputSerde.serializer());
-        TestOutputTopic<String, logistics_delivered> outputTopic = testDriver.createOutputTopic(outputTopicName, Serdes.String().deserializer(), outputSerde.deserializer());
+        inputTopic = testDriver.createInputTopic(inputTopicName, Serdes.String().serializer(), inputSerde.serializer());
+        outputTopic = testDriver.createOutputTopic(outputTopicName, Serdes.String().deserializer(), outputSerde.deserializer());
+    }
 
+    @AfterAll
+    static void tearDown() {
+        testDriver.close();
+    }
+
+    @Test
+    @DisplayName("Test a Delivered message goes through")
+    void testDeliveredMessagePropagares()
+    {
         var now = System.currentTimeMillis();
         logistics inputValue = logistics.newBuilder()
                 .setState("Delivered")
@@ -142,7 +157,5 @@ class GenericFilterAppTest {
         assertEquals("TRACK-ABC123", outputRecord.value.getTrackingId());
         assertEquals("TRACK-ABC123", outputRecord.value.getTrackingId());
         assertEquals("TRACK-ABC123", outputRecord.value.getTrackingId());
-
-        testDriver.close();
     }
 }
