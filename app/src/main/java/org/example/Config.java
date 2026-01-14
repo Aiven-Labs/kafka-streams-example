@@ -8,13 +8,15 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class Config {
     private static final Logger log = LoggerFactory.getLogger(Config.class);
 
+    /** Gather our `-D` command line switch values */
     public static Properties getConfig() {
-        // Gather our `-D` arguments
         // We put them all into one configuration, even though they really fall into three groups
         String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI");
         String sslTruststoreLocation = System.getProperty("SSL_TRUSTSTORE_LOCATION");
@@ -77,6 +79,25 @@ public class Config {
         config.put("output.topic.name", outputTopic);
 
         return config;
+    }
+
+    /** Set up the schema registry configuration from the `config` from getConfig() */
+    public static Map<String, String> getSerdeConfig(Properties config) {
+        // The values we want are in `config`, because it was convenient to gather
+        // them along with all the other command line values
+        final Map<String, String> serdeConfig = new HashMap<String, String>();
+        serdeConfig.put(
+                "schema.registry.url", config.get("schema.registry.url").toString()
+        );
+        serdeConfig.put(
+                "schema.registry.basic.auth.credentials.source",
+                config.get("schema.registry.basic.auth.credentials.source").toString()
+        );
+        serdeConfig.put(
+                "schema.registry.basic.auth.user.info",
+                config.get("schema.registry.basic.auth.user.info").toString()
+        );
+        return serdeConfig;
     }
 
 }
