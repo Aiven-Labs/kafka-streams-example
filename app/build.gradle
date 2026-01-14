@@ -30,28 +30,25 @@ java {
 }
 
 dependencies {
-    implementation 'org.apache.kafka:kafka-streams:3.6.0'
+    implementation 'org.apache.kafka:kafka-streams:4.1.1'
 
-    // Confluent Avro Serdes (which is compatible with Karapace)
-    implementation 'io.confluent:kafka-streams-avro-serde:7.6.1'
+    // Read / write Confluent-style Avro values
+    implementation 'io.confluent:kafka-streams-avro-serde:8.1.1'            // same version as kafka-json-schema-serializer
 
     // Avro dependency (for generated classes)
-    implementation 'org.apache.avro:avro:1.11.3'
+    implementation 'org.apache.avro:avro:1.12.1'
 
     implementation 'org.slf4j:slf4j-api:2.0.13'
     implementation 'org.slf4j:slf4j-simple:2.0.13'
 
     // Use JUnit Jupiter for testing.
-    // 1. testImplementation libs.junit.jupiter
-    //testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
-    testImplementation('org.junit.jupiter:junit-jupiter:6.0.1')  // 6.0.1 seems to be the latest version
+    testImplementation('org.junit.jupiter:junit-jupiter:6.0.1')             // 6.0.1 seems to be the latest version
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Test dependencies
-    // https://github.com/webcompere/system-stubs
     testImplementation 'uk.org.webcompere:system-stubs-jupiter:2.1.8'
     testImplementation 'org.apache.kafka:kafka-streams-test-utils:4.1.1'
-    testImplementation 'io.confluent:kafka-json-schema-serializer:8.1.1'
+    testImplementation 'io.confluent:kafka-json-schema-serializer:8.0.3'    // same version as kafka-streams-avro-serde
 }
 
 // Indicate where our Avro .avsc file is to be found (the default is "src/main/avro")
