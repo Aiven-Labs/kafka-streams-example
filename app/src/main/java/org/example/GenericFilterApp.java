@@ -82,24 +82,19 @@ public class GenericFilterApp {
                             // convert them to String, which is what the Specific Serde is expecting.
                             logistics_delivered outputValue = new logistics_delivered();
                             var timeUtc = inputValue.get("time_utc");
-                            log.info("Read timeUtc '{}'", timeUtc);
                             if (timeUtc instanceof Number) {    // Ignore if it's not a Number (for instance, if null)
                                 outputValue.setTimeUtc((Long) timeUtc);
                             }
 
                             var trackingId = inputValue.get("tracking_id");
-                            log.info("Read trackingId {} '{}'", trackingId.getClass().toString(), trackingId);
                             outputValue.setTrackingId(trackingId.toString());
 
                             var carrier = inputValue.get("carrier");
-                            log.info("Read carrier '{}'", carrier);
                             outputValue.setCarrier(carrier.toString());
 
                             var manifest = inputValue.get("manifest");
-                            log.info("Read manifest '{}'", manifest);
-                            if (manifest instanceof List) {
+                            if (manifest instanceof List manifestList) {
                                 // Make 100% sure we're outputting a List of <String>
-                                List manifestList = (List) manifest;
                                 List<String> strings = new ArrayList<>();
                                 for (Object obj : manifestList)
                                 {
