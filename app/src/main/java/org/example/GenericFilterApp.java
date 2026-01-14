@@ -78,49 +78,28 @@ public class GenericFilterApp {
                             // We don't bother with "state", since we already know it's "Delivered".
                             // We change the names "time_utc" to "timeUtc" and "tracking_id" to "trackingId"
                             // (although you can't tell that from the Java code, only from the output schema).
-                            // If values are null or not of a type we expect, ignore them.
-                            // For strings, beware that they're actually a Utf8 class.
+                            // For strings, beware that the Generic Serde gives us them as Utf8, so we *must*
+                            // convert them to String, which is what the Specific Serde is expecting.
                             logistics_delivered outputValue = new logistics_delivered();
                             var timeUtc = inputValue.get("time_utc");
                             log.info("Read timeUtc '{}'", timeUtc);
-                            if (timeUtc instanceof Number) {
+                            if (timeUtc instanceof Number) {    // Ignore if it's not a Number (for instance, if null)
                                 outputValue.setTimeUtc((Long) timeUtc);
                             }
+
                             var trackingId = inputValue.get("tracking_id");
                             log.info("Read trackingId {} '{}'", trackingId.getClass().toString(), trackingId);
-                            if (trackingId instanceof org.apache.avro.util.Utf8) {
-                                outputValue.setTrackingId(trackingId.toString());
-                            }
+                            outputValue.setTrackingId(trackingId.toString());
+
                             var carrier = inputValue.get("carrier");
                             log.info("Read carrier '{}'", carrier);
-                            if (carrier instanceof org.apache.avro.util.Utf8) {
-                                outputValue.setCarrier(carrier.toString());
-                            }
+                            outputValue.setCarrier(carrier.toString());
+
                             var manifest = inputValue.get("manifest");
                             log.info("Read manifest '{}'", manifest);
                             if (manifest instanceof List) {
+                                // Make 100% sure we're outputting a List of <String>
                                 List manifestList = (List) manifest;
-                                /*
-                                If I just call `outputValue.setManifest((List<String>) manifestList)` then it
-                                reasonably enough warns me that its an "[unchecked] unchecked cast" because it
-                                only knows that the value is a List, not a List<String>.
-
-                                I'd hoped to be able to do:
-
-                                List<String> strings = manifestList.stream()
-                                       .map(String::valueOf)
-                                       .toList();
-                                 but that just gives me a scarier warning
-
-                                   warning: [unchecked] unchecked call to <R>map(Function<? super T,? extends R>) as a member of the raw type Stream
-                                            .map(String::valueOf)
-                                                ^
-                                   where R,T are type-variables:
-                                     R extends Object declared in method <R>map(Function<? super T,? extends R>)
-                                     T extends Object declared in interface Stream
-
-                                 Doing the conversion by hand as follows works and keeps the compiler happy
-                                 */
                                 List<String> strings = new ArrayList<>();
                                 for (Object obj : manifestList)
                                 {
