@@ -15,6 +15,8 @@ import java.util.Properties;
 public class Config {
     private static final Logger log = LoggerFactory.getLogger(Config.class);
 
+    private static Map<String, String> serdeConfig = new HashMap<String, String>();
+
     /** Gather our `-D` command line switch values */
     public static Properties getConfig() {
         // We put them all into one configuration, even though they really fall into three groups
@@ -69,10 +71,11 @@ public class Config {
         config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, passwordForStore);
         config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, passwordForStore);
 
-        // Schema registry
-        config.put("schema.registry.url", schemaRegistryUrl);
-        config.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
-        config.put("schema.registry.basic.auth.user.info", schemaRegistryUserName + ":" + schemaRegistryPassword);
+        // Schema registry values - we create the `serdeConfig` here since here is where we have
+        // the command line values, but we don't need to put those values into the `config`
+        serdeConfig.put("schema.registry.url", schemaRegistryUrl);
+        serdeConfig.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
+        serdeConfig.put("schema.registry.basic.auth.user.info", schemaRegistryUserName + ":" + schemaRegistryPassword);
 
         // Topic names
         config.put("input.topic.name", inputTopic);
@@ -81,22 +84,7 @@ public class Config {
         return config;
     }
 
-    /** Set up the schema registry configuration from the `config` from getConfig() */
     public static Map<String, String> getSerdeConfig(Properties config) {
-        // The values we want are in `config`, because it was convenient to gather
-        // them along with all the other command line values
-        final Map<String, String> serdeConfig = new HashMap<String, String>();
-        serdeConfig.put(
-                "schema.registry.url", config.get("schema.registry.url").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.credentials.source",
-                config.get("schema.registry.basic.auth.credentials.source").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.user.info",
-                config.get("schema.registry.basic.auth.user.info").toString()
-        );
         return serdeConfig;
     }
 
