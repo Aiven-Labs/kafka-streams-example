@@ -101,8 +101,6 @@ class GenericFilterAppTests {
 
     static TopologyTestDriver testDriver;
 
-    static Properties config;
-
     @Nested
     @DisplayName("When input is logistics data")
     class InputIsLogisticsData {
@@ -117,7 +115,7 @@ class GenericFilterAppTests {
         static void setup() {
             SetupProperties.setProperties(inputTopicName, outputTopicName);
 
-            config = Config.getConfig();
+            Properties config = Config.getConfig();
             Map<String, String> serdeConfig = Config.getSerdeConfig(config);
 
             SetupMockSchemaRepository.registerSchemas();
@@ -197,8 +195,6 @@ class GenericFilterAppTests {
         static TestInputTopic<String, GenericRecord> inputTopic;
         static TestOutputTopic<String, logistics_delivered> outputTopic;
 
-        static Properties config;
-
         static final String inputTopicName = "logistics_data_partial";  // not the same topic as the main tests
         static final String outputTopicName = "logistics_data_delivered";
 
@@ -208,7 +204,7 @@ class GenericFilterAppTests {
         static void setup() {
             SetupProperties.setProperties(inputTopicName, outputTopicName);
 
-            config = Config.getConfig();
+            Properties config = Config.getConfig();
             Map<String, String> serdeConfig = Config.getSerdeConfig(config);
 
             SetupMockSchemaRepository.registerSchemas();
