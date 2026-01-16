@@ -3,7 +3,7 @@
 # You can override this at the `docker build` command line
 # with `--build-arg APP_NAME=<different name>`
 # (see https://docs.docker.com/build/building/variables/#env-usage-example)
-ARG APP_NAME="GenericFilterApp"
+ARG APP_NAME="GenericLogApp"
 
 # --- First stage: Get our app, work out its dependencies, create a JRE
 FROM gradle:9.2.1-jdk21-jammy AS builder
