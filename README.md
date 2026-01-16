@@ -56,6 +56,13 @@ All of the applications default to reading from the topic `logistics_data_gen`
 and (except for the first) writing to the topic `logistics_data_delivered`. Both
 topics must be on the same Kafka service.
 
+> **Note** that if you run `GenericCopyApp` with output to the topic 
+> `logistics_data_delivered`, and that topic already exists because one of
+> the `xxxFilterApp` programs has written to it, you are likely
+> to get an error, because the schema used for output by the `xxxFilterApp` 
+> programs is not the same as that used by the copy app. It's better to
+> specify a different output topic for the copy app.
+
 The applications are designed to be run in a container - a `Dockerfile` and 
 associated run scripts (`run.sh` and `setup_auth`) are provided.
 
@@ -135,7 +142,7 @@ docker run -d --name kafka-streams-container -p 3000:3000 \
         appimage
 ```
 
-Note that we don't actually use the port for anything at the moment.
+We don't actually use the port for anything at the moment.
 
 Several of those environment variable arguments have defaults, so you can 
 leave them off if you're happy with the default:
@@ -170,7 +177,8 @@ match the environment variables used by the container file and `run.sh`.
 
 This is a two stage container file.
 
-The `APP_NAME` environment variable determines which app is being built and run.
+The `APP_NAME` variable determines which app is being built and run. It 
+defaults to `GenericLogApp` (which will work for any input topic).
 
 The first stage builds a fat (uber) JAR for the program. This minimises the
 size of the executable to be passed to the second stage.
@@ -246,6 +254,15 @@ also need to copy the result to the top-level directory
 cp app/build/libs/$APP_NAME-uber.jar .
 ```
 
+### Running the unit tests
+
+There are minimal unit tests for the four applications.
+
+Run them with, for instance:
+```shell
+gradle clean cleanTest test
+```
+
 ## Running `run.sh` locally
 
 It's possible to run the `run.sh` script locally, and indeed this is useful
@@ -260,6 +277,10 @@ for testing. It's important to remember to
 For instance
 ```shell
 rm -rf certs && ./run.sh
+```
+or
+```shell
+; rm -rf certs && APP_NAME=GenericFilterApp ./run.sh
 ```
 or
 ```shell
