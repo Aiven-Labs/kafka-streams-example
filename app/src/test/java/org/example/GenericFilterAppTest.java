@@ -18,7 +18,6 @@ import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 
-import org.apache.kafka.streams.errors.LogAndFailProcessingExceptionHandler;
 import org.apache.kafka.streams.errors.StreamsException;
 import org.junit.jupiter.api.*;
 
@@ -39,58 +38,6 @@ import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 
 import data.gen.avro.logistics;            // The class generated for our input messages
 import data.gen.avro.logistics_delivered;  // The class generated for our output messages
-
-class SetupMockSchemaRepository {
-    static Path inputSchemaPath = Paths.get("src/main/avro/logistics_gen.avsc");
-    static Path outputSchemaPath = Paths.get("src/main/avro/logistics_delivered.avsc");
-
-    static void registerSchemas() {
-        String inputSchema = "";
-        String outputSchema = "";
-        try {
-            inputSchema = Files.readString(inputSchemaPath);
-        } catch (IOException e) {
-            System.out.println("Unable to read input schema " + e);
-        }
-
-        try {
-            outputSchema = Files.readString(outputSchemaPath);
-        } catch (IOException e) {
-            System.out.println("Unable to read output schema " + e);
-        }
-
-        // AvroSchema implements ParsedSchema
-
-        SchemaRegistryClient client = MockSchemaRegistry.getClientForScope("test_schema_registry");
-        try {
-            client.register("test_schema_registry", new AvroSchema(inputSchema));
-        } catch (IOException | RestClientException e) {
-            System.out.println("Unable to register input schema " + e);
-        }
-        try {
-            client.register("test_schema_registry", new AvroSchema(outputSchema));
-        } catch (IOException | RestClientException e) {
-            System.out.println("Unable to register output schema " + e);
-        }
-    }
-}
-
-class SetupProperties {
-    /**
-     * Set some standard test values as system properties
-     */
-    static void setProperties(String inputTopicName, String outputTopicName) {
-        System.setProperty("KAFKA_SERVICE_URI", "dummy:1234");
-        System.setProperty("SSL_TRUSTSTORE_LOCATION", "not used");
-        System.setProperty("SSL_KEYSTORE_LOCATION", "not used");
-        System.setProperty("PASSWORD_FOR_STORE", "not used");
-        System.setProperty("SCHEMA_REGISTRY_URL", "mock://test_schema_registry");
-        System.setProperty("SCHEMA_REGISTRY_PASSWORD", "not used");
-        System.setProperty("SCHEMA_REGISTRY_USERNAME", "not used");
-        System.setProperty("INPUT_TOPIC", inputTopicName);        // the default
-        System.setProperty("OUTPUT_TOPIC", outputTopicName);       // the default
-    }
-}
 
 @ExtendWith(SystemStubsExtension.class)
 class GenericFilterAppTests {
@@ -135,7 +82,9 @@ class GenericFilterAppTests {
 
         @AfterAll
         static void tearDown() {
-            testDriver.close();
+            if (testDriver != null) {
+                testDriver.close();
+            }
         }
 
         @Test
@@ -151,8 +100,6 @@ class GenericFilterAppTests {
                     .setManifest(List.of("Cosy jumper", "Wooly hat"))
                     .setNextHopLocation("None")
                     .build();
-
-            System.out.println("Input value " + inputValue);
 
             inputTopic.pipeInput("key", inputValue);
 
@@ -180,8 +127,6 @@ class GenericFilterAppTests {
                     .setNextHopLocation("None")
                     .build();
 
-            System.out.println("Input value " + inputValue);
-
             inputTopic.pipeInput("key", inputValue);
 
             assertTrue(outputTopic.isEmpty(), "Processing message does not come through");
@@ -200,15 +145,9 @@ class GenericFilterAppTests {
 
         static AvroSchema inputSchema;
 
-        @BeforeAll
-        static void setup() {
-            SetupProperties.setProperties(inputTopicName, outputTopicName);
+        static Path outputSchemaPath = Paths.get("src/main/avro/logistics_delivered.avsc");
 
-            Properties config = Config.getConfig();
-            Map<String, String> serdeConfig = Config.getSerdeConfig(config);
-
-            SetupMockSchemaRepository.registerSchemas();
-
+        static void registerSchemas() {
             // We want to use a different Avro schema for the sent message,
             // as none of the fields in the normal logistics_gen schema are optional
             Schema.Parser parser = new Schema.Parser();
@@ -221,12 +160,36 @@ class GenericFilterAppTests {
                     }
                     """);
 
+            String outputSchema = "";
+            try {
+                outputSchema = Files.readString(outputSchemaPath);
+            } catch (IOException e) {
+                System.out.println("Unable to read output schema " + e);
+            }
+
+            // AvroSchema implements ParsedSchema
+
             SchemaRegistryClient client = MockSchemaRegistry.getClientForScope("test_schema_registry");
             try {
                 client.register("test_schema_registry", inputSchema);
             } catch (IOException | RestClientException e) {
                 System.out.println("Unable to register input schema " + e);
             }
+            try {
+                client.register("test_schema_registry", new AvroSchema(outputSchema));
+            } catch (IOException | RestClientException e) {
+                System.out.println("Unable to register output schema " + e);
+            }
+        }
+
+        @BeforeAll
+        static void setup() {
+            SetupProperties.setProperties(inputTopicName, outputTopicName);
+
+            Properties config = Config.getConfig();
+            Map<String, String> serdeConfig = Config.getSerdeConfig(config);
+
+            registerSchemas();
 
             Topology topology = GenericFilterApp.buildTopology(config, serdeConfig);
             testDriver = new TopologyTestDriver(topology, config);

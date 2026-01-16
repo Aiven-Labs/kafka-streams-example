@@ -59,6 +59,7 @@ public class Config {
 
         // We're not particularly interested in the message key, so leave it as a string
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        // We'll set the actual value Serdes we want later on
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
 
         // Security settings.

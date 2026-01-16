@@ -1,0 +1,18 @@
+package org.example;
+
+public class SetupProperties {
+    /**
+     * Set some standard test values as system properties
+     */
+    static void setProperties(String inputTopicName, String outputTopicName) {
+        System.setProperty("KAFKA_SERVICE_URI", "dummy:1234");
+        System.setProperty("SSL_TRUSTSTORE_LOCATION", "not used");
+        System.setProperty("SSL_KEYSTORE_LOCATION", "not used");
+        System.setProperty("PASSWORD_FOR_STORE", "not used");
+        System.setProperty("SCHEMA_REGISTRY_URL", "mock://test_schema_registry");
+        System.setProperty("SCHEMA_REGISTRY_PASSWORD", "not used");
+        System.setProperty("SCHEMA_REGISTRY_USERNAME", "not used");
+        System.setProperty("INPUT_TOPIC", inputTopicName);        // the default
+        System.setProperty("OUTPUT_TOPIC", outputTopicName);       // the default
+    }
+}
