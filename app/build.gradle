@@ -38,6 +38,7 @@ dependencies {
     // Avro dependency (for generated classes)
     implementation 'org.apache.avro:avro:1.12.1'
 
+    // Logging
     implementation 'org.slf4j:slf4j-api:2.0.13'
     implementation 'org.slf4j:slf4j-simple:2.0.13'
 

@@ -131,9 +131,9 @@ Run the container image:
 ```shell
 docker run -d --name kafka-streams-container -p 3000:3000 \
         -e KAFKA_SERVICE_URI=$KAFKA_SERVICE_URI \
-        -e CA_PEM_CONTENTS=$CA_PEM_CONTENTS \
-        -e SERVICE_CERT_CONTENTS=$SERVICE_CERT_CONTENTS \
-        -e SERVICE_KEY_CONTENTS=$SERVICE_KEY_CONTENTS \
+        -e CA_PEM_CONTENTS="$CA_PEM_CONTENTS" \
+        -e SERVICE_CERT_CONTENTS="$SERVICE_CERT_CONTENTS" \
+        -e SERVICE_KEY_CONTENTS="$SERVICE_KEY_CONTENTS" \
         -e SCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL \
         -e SCHEMA_REGISTRY_USERNAME=$SCHEMA_REGISTRY_USERNAME \ 
         -e SCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD \
@@ -158,10 +158,9 @@ All variants of the Java app take the following arguments (of course
 match the environment variables used by the container file and `run.sh`.
 
 * `-DKAFKA_SERVICE_URI` - the URI for the Kafka service.
-* `-DSSL_TRUSTSTORE_LOCATION` - the directory containing the `client.truststore.jks` file.
-* `-DSSL_KEYSTORE_LOCATION` - the directory containing the `client.keystore.p12` file
-* `-DPASSWORD_FOR_STORE` - the password used for those stores (this assumes
-  the same password is used for both).
+* `-DCA_PEM_CONTENTS` - the contents of the `ca.pem` file
+* `-DSERVICE_CERT_CONTENTS` - the contents of the `service.cert` file
+* `-DSERVICE_KEY_CONTENTS` - the contents of the `service.key` file
 * `-DSCHEMA_REGISTRY_URL` - the URL for the schema registry.
 * `-DSCHEMA_REGISTRY_USERNAME` - the user name for accessing the schema
   registry. This defaults to `avnadmin`, which is the default user name for
@@ -216,16 +215,9 @@ container and the Java app itself):
 - `APP_NAME` - the name of the application to run. **This is optional** and 
   defaults to `GenericLogApp`.
 
-It sources the `setup_auth.sh` script which:
-*  puts the contents of the `CA_PEM_CONTENTS`, `SERVICE_CERT_CONTENTS` and
-   `SERVICE_KEY_CONTENTS` environment variables into files of the appropriate
-   name in a directory called `certs`
-* generates a password using `openssl`
-* uses `openssl` to create a key store with that password
-* uses `keytool` to create a trust store with that password
-
-(Creating the password inside the script means that the password does
-not leave the container.)
+It sources the `setup_auth.sh` script which makes sure that the
+`CA_PEM_CONTENTS`, `SERVICE_CERT_CONTENTS` and `SERVICE_KEY_CONTENTS`
+environment variables contain data that is correctly split into lines.
 
 Finally the `run.sh` script  runs the fat Java JAR with the necessary
 arguments.

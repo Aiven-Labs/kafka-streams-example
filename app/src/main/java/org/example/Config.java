@@ -21,9 +21,9 @@ public class Config {
     public static Properties getConfig() {
         // We put them all into one configuration, even though they really fall into three groups
         String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI");
-        String sslTruststoreLocation = System.getProperty("SSL_TRUSTSTORE_LOCATION");
-        String sslKeystoreLocation = System.getProperty("SSL_KEYSTORE_LOCATION");
-        String passwordForStore = System.getProperty("PASSWORD_FOR_STORE");
+        String caPemContents = System.getProperty("CA_PEM_CONTENTS");
+        String serviceCertContents = System.getProperty("SERVICE_CERT_CONTENTS");
+        String serviceKeyContents = System.getProperty("SERVICE_KEY_CONTENTS");
         String schemaRegistryUrl = System.getProperty("SCHEMA_REGISTRY_URL");
         // We have a sensible default for the schema registry user, so provide it
         String schemaRegistryUserName = System.getProperty("SCHEMA_REGISTRY_USERNAME", "avnadmin");
@@ -33,18 +33,18 @@ public class Config {
         String outputTopic = System.getProperty("OUTPUT_TOPIC", "logistics_data_delivered");
 
         if (kafkaServiceUri == null
-                || sslTruststoreLocation == null
-                || sslKeystoreLocation == null
-                || passwordForStore == null
+                || caPemContents == null
+                || serviceCertContents == null
+                || serviceKeyContents == null
                 || schemaRegistryUrl == null
                 || schemaRegistryUserName == null
                 || schemaRegistryPassword == null
                 || inputTopic == null
                 || outputTopic == null) {
             if (kafkaServiceUri == null) log.error("Missing value for -DKAFKA_SERVICE_URI");
-            if (sslTruststoreLocation == null) log.error("Missing value for -DSSL_TRUSTSTORE_LOCATION");
-            if (sslKeystoreLocation == null) log.error("Missing value for -DSSL_KEYSTORE_LOCATION");
-            if (passwordForStore == null) log.error("Missing value for -DPASSWORD_FOR_STORE");
+            if (caPemContents == null) log.error("Missing value for -DCA_PEM_CONTENTS");
+            if (serviceCertContents == null) log.error("Missing value for -DSERVICE_CERT_CONTENTS");
+            if (serviceKeyContents == null) log.error("Missing value for -DSERVICE_KEY_CONTENTS");
             if (schemaRegistryUrl == null) log.error("Missing value for -DSCHEMA_REGISTRY_URL");
             if (schemaRegistryUserName == null) log.error("Missing value for -DSCHEMA_REGISTRY_USERNAME");
             if (schemaRegistryPassword == null) log.error("Missing value for -DSCHEMA_REGISTRY_PASSWORD");
@@ -63,14 +63,13 @@ public class Config {
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
 
         // Security settings.
-        // a. These settings must match the security settings of the secure Kafka cluster.
-        // b. The SSL trust store and key store files must be locally accessible to the application.
+        // These settings must match the security settings of the secure Kafka cluster.
         config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
-        config.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, sslTruststoreLocation);
-        config.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, passwordForStore);
-        config.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, sslKeystoreLocation);
-        config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, passwordForStore);
-        config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, passwordForStore);
+        config.put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, "PEM");
+        config.put(SslConfigs.SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG, serviceCertContents);
+        config.put(SslConfigs.SSL_KEYSTORE_KEY_CONFIG, serviceKeyContents);
+        config.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "PEM");
+        config.put(SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG, caPemContents);
 
         String schemaRegistryBasicAuthUserInfo = schemaRegistryUserName + ":" + schemaRegistryPassword;
 
