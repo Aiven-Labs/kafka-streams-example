@@ -260,22 +260,20 @@ It's possible to run the `run.sh` script locally, and indeed this is useful
 for testing. It's important to remember to
 
 1. Copy the built app into the same directory as the `run.sh` script
-2. Delete the `certs` directory each time, as the password used for the trust
-   and key stores is different each time.
-3. Set the required various environment variables first - these are also 
+2. Set the required various environment variables first - these are also 
    documented at the top of the `run.sh` file.
 
 For instance
 ```shell
-rm -rf certs && ./run.sh
+./run.sh
 ```
 or
 ```shell
-; rm -rf certs && APP_NAME=GenericFilterApp ./run.sh
+APP_NAME=GenericFilterApp ./run.sh
 ```
 or
 ```shell
-; rm -rf certs && APP_NAME=GenericCopyApp OUTPUT_TOPIC=logistics_copy ./run.sh
+APP_NAME=GenericCopyApp OUTPUT_TOPIC=logistics_copy ./run.sh
 ```
 
 ## Visualising the messages
@@ -497,5 +495,5 @@ or for Fish shell
 source prep.fish
 ```
 
-And now you're ready to run the program, either via `rm -rf certs; ./run.sh`
+And now you're ready to run the program, either via `./run.sh`
 or via Docker.
