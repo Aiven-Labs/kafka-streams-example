@@ -186,8 +186,7 @@ It uses `jdeps` and `jlink` to work out the dependencies that are not in the
 JAR file, and extract a minimum JRE from the larger JRE in provided by the
 operating system used in that first stage.
 
-The second stage then downloads `openssl` (used in the `setup_auth.sh`) and `rocksdb`
-(used by Kafka Streams).
+The second stage then downloads `rocksdb` (used by Kafka Streams).
 
 It then copies over the minimal JRE prepared in the first stage, and the fat
 JAR itself, as well as the `run.sh` and `setup_auth.sh` files, and

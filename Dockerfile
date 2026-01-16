@@ -68,7 +68,6 @@ WORKDIR /app
 
 # Install openssl (for run.sh) and RocksDB library (for Kafka Streams)
 RUN apt-get update \
-    && apt-get install -y openssl \
     && apt-get install -y librocksdb7.8
 
 RUN apt-get autoremove -y \
