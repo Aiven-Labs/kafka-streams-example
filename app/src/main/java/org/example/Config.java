@@ -72,11 +72,18 @@ public class Config {
         config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, passwordForStore);
         config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, passwordForStore);
 
+        String schemaRegistryBasicAuthUserInfo = schemaRegistryUserName + ":" + schemaRegistryPassword;
+
         // Schema registry values - we create the `serdeConfig` here since here is where we have
         // the command line values, but we don't need to put those values into the `config`
         serdeConfig.put("schema.registry.url", schemaRegistryUrl);
         serdeConfig.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
-        serdeConfig.put("schema.registry.basic.auth.user.info", schemaRegistryUserName + ":" + schemaRegistryPassword);
+        serdeConfig.put("schema.registry.basic.auth.user.info", schemaRegistryBasicAuthUserInfo);
+
+        // When we're in the SpecificFilterApp use case, we also need those same values in the main config as well
+        config.put("schema.registry.url", schemaRegistryUrl);
+        config.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
+        config.put("schema.registry.basic.auth.user.info", schemaRegistryBasicAuthUserInfo);
 
         // Topic names
         config.put("input.topic.name", inputTopic);
