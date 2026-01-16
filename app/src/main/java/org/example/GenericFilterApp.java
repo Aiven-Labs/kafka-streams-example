@@ -14,10 +14,7 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 // The input Avro messages follow a schema called `logistics`, which doesn't
@@ -25,14 +22,13 @@ import java.util.concurrent.CountDownLatch;
 // the output schema `logistics_delivered` for consistency.
 import data.gen.avro.logistics_delivered;  // The class generated for our output messages
 
-
 /**
  * This app is an example of using Kafka Streams to filter a Logistics stream
  *
  * - Messages are Avro, as produced by the Aiven for Apache Kafka sample stream generator for Logistics.
  * - We ignore any messages where `state` is not `Delivered`.
  * - We only pass on some values, and we rename a couple.
- * - Since we use the GenericAvroSerde, we only an explicit schema for the target   messages.
+ * - Since we use the GenericAvroSerde, we only an explicit schema for the target messages.
  */
 public class GenericFilterApp {
     private static final Logger log = LoggerFactory.getLogger(GenericFilterApp.class);
@@ -40,25 +36,8 @@ public class GenericFilterApp {
     // Define the state we are filtering on
     private static final String KEEP_STATE = "Delivered";
 
-    public static void main(String[] args) {
-        Properties config = Config.getConfig();
-
-        // Set up the schema registry
-        // The values we want are in `config`, because it was convenient to gather
-        // them along with all the other command line values
-        final Map<String, String> serdeConfig = new HashMap<String, String>();
-        serdeConfig.put(
-                "schema.registry.url", config.get("schema.registry.url").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.credentials.source",
-                config.get("schema.registry.basic.auth.credentials.source").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.user.info",
-                config.get("schema.registry.basic.auth.user.info").toString()
-        );
-
+    public static Topology buildTopology(Properties config, Map<String, String> serdeConfig)
+    {
         // We're using a generic Serde for the input message values, and the library code
         // will download the schema from the schema repository at runtime, using the schema ID
         // at the start of each (Confluent-style) Avro message.
@@ -98,24 +77,33 @@ public class GenericFilterApp {
                             // We don't bother with "state", since we already know it's "Delivered".
                             // We change the names "time_utc" to "timeUtc" and "tracking_id" to "trackingId"
                             // (although you can't tell that from the Java code, only from the output schema).
-                            // If values are null or not of a type we expect, ignore them.
-                            // For strings, beware that they're actually a Utf8 class.
+                            // For strings, beware that the Generic Serde gives us them as Utf8, so we *must*
+                            // convert them to String, which is what the Specific Serde is expecting.
                             logistics_delivered outputValue = new logistics_delivered();
                             var timeUtc = inputValue.get("time_utc");
-                            if (timeUtc instanceof Number) {
+                            if (timeUtc instanceof Number) {    // Ignore if it's not a Number (for instance, if null)
                                 outputValue.setTimeUtc((Long) timeUtc);
                             }
+
                             var trackingId = inputValue.get("tracking_id");
-                            if (trackingId instanceof org.apache.avro.util.Utf8) {
-                                outputValue.setTrackingId(trackingId.toString());
-                            }
+                            outputValue.setTrackingId(trackingId.toString());
+
                             var carrier = inputValue.get("carrier");
-                            if (carrier instanceof org.apache.avro.util.Utf8) {
-                                outputValue.setCarrier(carrier.toString());
-                            }
+                            outputValue.setCarrier(carrier.toString());
+
                             var manifest = inputValue.get("manifest");
-                            if (manifest instanceof List) {
-                                outputValue.setManifest((List<String>) manifest);
+                            if (manifest instanceof List manifestList) {
+                                // Make 100% sure we're outputting a List of <String>
+                                List<String> strings = new ArrayList<>();
+                                for (Object obj : manifestList)
+                                {
+                                    try {
+                                        strings.add(obj.toString());
+                                    } catch (ClassCastException e) {
+                                        ; // ignore the element
+                                    }
+                                }
+                                outputValue.setManifest(strings);
                             }
                             return outputValue;
                         }
@@ -126,10 +114,18 @@ public class GenericFilterApp {
                         Produced.with(Serdes.String(), outputMessageSerde)
                 );
 
-        final Topology topology = builder.build();
+        // Create and return the Topology for that transformation
+        return builder.build();
+    }
+
+    public static void main(String[] args) {
+        Properties config = Config.getConfig();
+        final Map<String, String> serdeConfig = Config.getSerdeConfig(config);
+
+        Topology topology = buildTopology(config, serdeConfig);
         System.out.println(topology.describe());
 
-        final KafkaStreams streams = new KafkaStreams(builder.build(), config);
+        final KafkaStreams streams = new KafkaStreams(topology, config);
 
         // Add a shutdown hook to close the Streams application gracefully
         final CountDownLatch latch = new CountDownLatch(1);

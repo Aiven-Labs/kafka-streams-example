@@ -9,7 +9,6 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,25 +29,7 @@ import java.util.concurrent.CountDownLatch;
 public class GenericLogApp {
     private static final Logger log = LoggerFactory.getLogger(GenericLogApp.class);
 
-    public static void main(String[] args) {
-        Properties config = Config.getConfig();
-
-        // Set up the schema registry
-        // The values we want are in `config`, because it was convenient to gather
-        // them along with all the other command line values
-        final Map<String, String> serdeConfig = new HashMap<String, String>();
-        serdeConfig.put(
-                "schema.registry.url", config.get("schema.registry.url").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.credentials.source",
-                config.get("schema.registry.basic.auth.credentials.source").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.user.info",
-                config.get("schema.registry.basic.auth.user.info").toString()
-        );
-
+    public static Topology buildTopology(Properties config, Map<String, String> serdeConfig) {
         // We're using a generic Serde for the input message values, and the library code
         // will download the schema from the schema repository at runtime, using the schema ID
         // at the start of each (Confluent-style) Avro message.
@@ -69,10 +50,18 @@ public class GenericLogApp {
         sourceStream
                 .peek( (String key, GenericRecord inputValue) -> log.info("LOOKING AT: Value='{}'", inputValue) );
 
-        final Topology topology = builder.build();
+        // Create and return the Topology for that transformation
+        return builder.build();
+    }
+
+    public static void main(String[] args) {
+        Properties config = Config.getConfig();
+        final Map<String, String> serdeConfig = Config.getSerdeConfig(config);
+
+        Topology topology = buildTopology(config, serdeConfig);
         System.out.println(topology.describe());
 
-        final KafkaStreams streams = new KafkaStreams(builder.build(), config);
+        final KafkaStreams streams = new KafkaStreams(topology, config);
 
         // Add a shutdown hook to close the Streams application gracefully
         final CountDownLatch latch = new CountDownLatch(1);

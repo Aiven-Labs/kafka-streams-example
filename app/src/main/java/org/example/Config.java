@@ -8,13 +8,17 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class Config {
     private static final Logger log = LoggerFactory.getLogger(Config.class);
 
+    private static Map<String, String> serdeConfig = new HashMap<String, String>();
+
+    /** Gather our `-D` command line switch values */
     public static Properties getConfig() {
-        // Gather our `-D` arguments
         // We put them all into one configuration, even though they really fall into three groups
         String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI");
         String sslTruststoreLocation = System.getProperty("SSL_TRUSTSTORE_LOCATION");
@@ -55,6 +59,7 @@ public class Config {
 
         // We're not particularly interested in the message key, so leave it as a string
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        // We'll set the actual value Serdes we want later on
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
 
         // Security settings.
@@ -67,16 +72,28 @@ public class Config {
         config.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, passwordForStore);
         config.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, passwordForStore);
 
-        // Schema registry
+        String schemaRegistryBasicAuthUserInfo = schemaRegistryUserName + ":" + schemaRegistryPassword;
+
+        // Schema registry values - we create the `serdeConfig` here since here is where we have
+        // the command line values, but we don't need to put those values into the `config`
+        serdeConfig.put("schema.registry.url", schemaRegistryUrl);
+        serdeConfig.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
+        serdeConfig.put("schema.registry.basic.auth.user.info", schemaRegistryBasicAuthUserInfo);
+
+        // When we're in the SpecificFilterApp use case, we also need those same values in the main config as well
         config.put("schema.registry.url", schemaRegistryUrl);
         config.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
-        config.put("schema.registry.basic.auth.user.info", schemaRegistryUserName + ":" + schemaRegistryPassword);
+        config.put("schema.registry.basic.auth.user.info", schemaRegistryBasicAuthUserInfo);
 
         // Topic names
         config.put("input.topic.name", inputTopic);
         config.put("output.topic.name", outputTopic);
 
         return config;
+    }
+
+    public static Map<String, String> getSerdeConfig(Properties config) {
+        return serdeConfig;
     }
 
 }

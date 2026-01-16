@@ -10,7 +10,6 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -22,16 +21,14 @@ import java.util.concurrent.CountDownLatch;
 import data.gen.avro.logistics;            // The class generated for our input messages
 import data.gen.avro.logistics_delivered;  // And the class generated for our output messages
 
-import org.example.Config;
-
 /**
  * This app is an example of using Kafka Streams to filter a Logistics stream
  *
  * - Messages are Avro, as produced by the Aiven for Apache Kafka sample stream generator for Logistics.
  * - We ignore any messages where `state` is not `Delivered`.
  * - We only pass on some values, and we rename a couple.
- * - Since we use the SpecificAvroSerde, we need explicit schemas for both the source and target
- *   messages.
+ * - Since we use a SpecificAvroSerde for both input and output, we need explicit schemas for both
+ *   the source and target messages.
  */
 public class SpecificFilterApp {
     private static final Logger log = LoggerFactory.getLogger(SpecificFilterApp.class);
@@ -39,25 +36,7 @@ public class SpecificFilterApp {
     // Define the state we are filtering on
     private static final String KEEP_STATE = "Delivered";
 
-    public static void main(String[] args) {
-        Properties config = Config.getConfig();
-
-        // Set up the schema registry
-        // The values we want are in `config`, because it was convenient to gather
-        // them along with all the other command line values
-        final Map<String, String> serdeConfig = new HashMap<String, String>();
-        serdeConfig.put(
-                "schema.registry.url", config.get("schema.registry.url").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.credentials.source",
-                config.get("schema.registry.basic.auth.credentials.source").toString()
-        );
-        serdeConfig.put(
-                "schema.registry.basic.auth.user.info",
-                config.get("schema.registry.basic.auth.user.info").toString()
-        );
-
+    public static Topology buildTopology(Properties config, Map<String, String> serdeConfig) {
         // Configure the Serde to be used for the input Avro messages
         // Keys remain strings (the default key type), values are Avro objects.
         final SpecificAvroSerde<logistics> inputMessageSerde = new SpecificAvroSerde<>();
@@ -103,10 +82,19 @@ public class SpecificFilterApp {
                         Produced.with(Serdes.String(), outputMessageSerde)
                 );
 
-        final Topology topology = builder.build();
+        // Create and return the Topology for that transformation
+        return builder.build();
+    }
+
+
+    public static void main(String[] args) {
+        Properties config = Config.getConfig();
+        final Map<String, String> serdeConfig = Config.getSerdeConfig(config);
+
+        Topology topology = buildTopology(config, serdeConfig);
         System.out.println(topology.describe());
 
-        final KafkaStreams streams = new KafkaStreams(builder.build(), config);
+        final KafkaStreams streams = new KafkaStreams(topology, config);
 
         // Add a shutdown hook to close the Streams application gracefully
         final CountDownLatch latch = new CountDownLatch(1);

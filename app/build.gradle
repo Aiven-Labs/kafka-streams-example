@@ -30,21 +30,25 @@ java {
 }
 
 dependencies {
-    implementation 'org.apache.kafka:kafka-streams:3.6.0'
+    implementation 'org.apache.kafka:kafka-streams:4.1.1'
 
-    // Confluent Avro Serdes (which is compatible with Karapace)
-    implementation 'io.confluent:kafka-streams-avro-serde:7.6.1'
+    // Read / write Confluent-style Avro values
+    implementation 'io.confluent:kafka-streams-avro-serde:8.1.1'            // same version as kafka-json-schema-serializer
 
     // Avro dependency (for generated classes)
-    implementation 'org.apache.avro:avro:1.11.3'
+    implementation 'org.apache.avro:avro:1.12.1'
 
     implementation 'org.slf4j:slf4j-api:2.0.13'
     implementation 'org.slf4j:slf4j-simple:2.0.13'
 
     // Use JUnit Jupiter for testing.
-    testImplementation libs.junit.jupiter
-
+    testImplementation('org.junit.jupiter:junit-jupiter:6.0.1')             // 6.0.1 seems to be the latest version
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Test dependencies
+    testImplementation 'uk.org.webcompere:system-stubs-jupiter:2.1.8'
+    testImplementation 'org.apache.kafka:kafka-streams-test-utils:4.1.1'
+    testImplementation 'io.confluent:kafka-json-schema-serializer:8.0.3'    // same version as kafka-streams-avro-serde
 }
 
 // Indicate where our Avro .avsc file is to be found (the default is "src/main/avro")
@@ -56,15 +60,28 @@ sourceSets {
     }
 }
 
-
+// Set the default application, which will be run by `./gradlew run`
+// (It isn't clear we need this for our purposes - it may get removed later on)
 application {
     // Define the main class for the application.
-    mainClass = 'org.example.FilterApp'
+    mainClass = 'org.example.GenericFilterApp'
+}
+
+// It's quite useful to get slightly better warning messages from the compiler
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['-Xlint:unchecked']
 }
 
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+    // See https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/testing/logging/TestLoggingContainer.html
+    // for the documentation for `testLogging`
+    testLogging {
+        events "passed", "skipped", "failed"
+        // A more complete list would be:
+        //events "failed", "passed", "skipped", "standardError","standardOut", "started"
+    }
 }
 
 tasks.register('SpecificFilterAppUberJar', Jar) {
@@ -142,9 +159,3 @@ tasks.register('GenericLogAppUberJar', Jar) {
         configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
     }
 }
-
-/*
-tasks.withType(JavaCompile) {
-    options.compilerArgs += ['-Xlint:unchecked']
-}
-*/
