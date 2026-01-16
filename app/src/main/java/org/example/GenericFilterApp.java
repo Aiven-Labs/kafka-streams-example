@@ -28,7 +28,7 @@ import data.gen.avro.logistics_delivered;  // The class generated for our output
  * - Messages are Avro, as produced by the Aiven for Apache Kafka sample stream generator for Logistics.
  * - We ignore any messages where `state` is not `Delivered`.
  * - We only pass on some values, and we rename a couple.
- * - Since we use the GenericAvroSerde, we only an explicit schema for the target   messages.
+ * - Since we use the GenericAvroSerde, we only an explicit schema for the target messages.
  */
 public class GenericFilterApp {
     private static final Logger log = LoggerFactory.getLogger(GenericFilterApp.class);
