@@ -22,7 +22,6 @@ import java.util.concurrent.CountDownLatch;
 // the output schema `logistics_delivered` for consistency.
 import data.gen.avro.logistics_delivered;  // The class generated for our output messages
 
-
 /**
  * This app is an example of using Kafka Streams to filter a Logistics stream
  *

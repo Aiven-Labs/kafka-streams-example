@@ -2,6 +2,7 @@ package org.example;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
@@ -13,14 +14,12 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
-
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.errors.StreamsException;
 import org.junit.jupiter.api.*;
-
 import org.junit.jupiter.api.extension.ExtendWith;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
@@ -33,8 +32,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 
 import data.gen.avro.logistics;            // The class generated for our input messages
 import data.gen.avro.logistics_delivered;  // The class generated for our output messages
@@ -210,8 +207,8 @@ class GenericFilterAppTests {
         }
 
         @Test
-        @DisplayName("Test a Delivered message with partial content goes through")
-        void testPartialDeliveredMessagePropagates() {
+        @DisplayName("Test a Delivered message with partial content does not go through")
+        void testPartialDeliveredMessageDoesNotPropagate() {
             GenericRecord inputValue = new GenericData.Record(inputSchema.rawSchema());
             inputValue.put("state", "Delivered");
 
