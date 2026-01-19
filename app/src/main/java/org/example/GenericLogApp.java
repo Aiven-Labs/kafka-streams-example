@@ -12,7 +12,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.security.Security;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
