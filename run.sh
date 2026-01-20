@@ -13,10 +13,11 @@
 # we'll use the default value, which is "avnadmin"
 export SCHEMA_REGISTRY_USERNAME=${SCHEMA_REGISTRY_USERNAME:-avnadmin}
 #
-# If you give values for INPUT_TOPIC and OUTPUT_TOPIC we'll use them,
-# otherwise we've got defaults
-export INPUT_TOPIC=${INPUT_TOPIC:-logistics_data_gen}
-export OUTPUT_TOPIC=${OUTPUT_TOPIC:-logistics_data_delivered}
+# You can also give values for INPUT_TOPIC and OUTPUT_TOPIC, but if
+# they're unset, then the Java application will use an appropriate
+# default
+export INPUT_TOPIC=${INPUT_TOPIC:-""}
+export OUTPUT_TOPIC=${OUTPUT_TOPIC:-""}
 #
 # We need the name of the app (its class name), but we've got a default
 export APP_NAME=${APP_NAME:-GenericLogApp}

@@ -34,7 +34,7 @@ class GenericLogAppTests {
 
     @BeforeAll
     static void setupBeforeAll() {
-        Properties config = Config.getConfig();
+        Properties config = Config.getConfig("logistics_data_gen", "");
         Map<String, String> serdeConfig = Config.getSerdeConfig(config);
 
         SetupMockSchemaRepository.registerSchemas();

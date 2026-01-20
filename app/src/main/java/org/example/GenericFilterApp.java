@@ -119,7 +119,7 @@ public class GenericFilterApp {
     }
 
     public static void main(String[] args) {
-        Properties config = Config.getConfig();
+        Properties config = Config.getConfig("logistics_data_gen", "logistics_data_delivered");
         final Map<String, String> serdeConfig = Config.getSerdeConfig(config);
 
         Topology topology = buildTopology(config, serdeConfig);

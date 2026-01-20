@@ -59,7 +59,7 @@ class GenericFilterAppTests {
         static void setup() {
             SetupProperties.setProperties(inputTopicName, outputTopicName);
 
-            Properties config = Config.getConfig();
+            Properties config = Config.getConfig("logistics_data_gen", "logistics_data_delivered");
             Map<String, String> serdeConfig = Config.getSerdeConfig(config);
 
             SetupMockSchemaRepository.registerSchemas();
@@ -183,7 +183,7 @@ class GenericFilterAppTests {
         static void setup() {
             SetupProperties.setProperties(inputTopicName, outputTopicName);
 
-            Properties config = Config.getConfig();
+            Properties config = Config.getConfig("logistics_data_gen", "logistics_data_delivered");
             Map<String, String> serdeConfig = Config.getSerdeConfig(config);
 
             registerSchemas();

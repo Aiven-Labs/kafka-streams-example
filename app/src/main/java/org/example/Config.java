@@ -18,7 +18,7 @@ public class Config {
     private static Map<String, String> serdeConfig = new HashMap<String, String>();
 
     /** Gather our `-D` command line switch values */
-    public static Properties getConfig() {
+    public static Properties getConfig(String defaultInputTopic, String defaultOutputTopic) {
         // We put them all into one configuration, even though they really fall into three groups
         String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI");
         String caPemContents = System.getProperty("CA_PEM_CONTENTS");
@@ -29,8 +29,8 @@ public class Config {
         String schemaRegistryUserName = System.getProperty("SCHEMA_REGISTRY_USERNAME", "avnadmin");
         String schemaRegistryPassword = System.getProperty("SCHEMA_REGISTRY_PASSWORD");
         // We have defaults for our topic names as well
-        String inputTopic = System.getProperty("INPUT_TOPIC", "logistics_data_gen");
-        String outputTopic = System.getProperty("OUTPUT_TOPIC", "logistics_data_delivered");
+        String inputTopic = System.getProperty("INPUT_TOPIC", defaultInputTopic);
+        String outputTopic = System.getProperty("OUTPUT_TOPIC", defaultOutputTopic);
 
         if (kafkaServiceUri == null
                 || caPemContents == null
@@ -38,9 +38,7 @@ public class Config {
                 || serviceKeyContents == null
                 || schemaRegistryUrl == null
                 || schemaRegistryUserName == null
-                || schemaRegistryPassword == null
-                || inputTopic == null
-                || outputTopic == null) {
+                || schemaRegistryPassword == null ){
             if (kafkaServiceUri == null) log.error("Missing value for -DKAFKA_SERVICE_URI");
             if (caPemContents == null) log.error("Missing value for -DCA_PEM_CONTENTS");
             if (serviceCertContents == null) log.error("Missing value for -DSERVICE_CERT_CONTENTS");
@@ -48,9 +46,15 @@ public class Config {
             if (schemaRegistryUrl == null) log.error("Missing value for -DSCHEMA_REGISTRY_URL");
             if (schemaRegistryUserName == null) log.error("Missing value for -DSCHEMA_REGISTRY_USERNAME");
             if (schemaRegistryPassword == null) log.error("Missing value for -DSCHEMA_REGISTRY_PASSWORD");
-            if (inputTopic == null) log.error("Missing value for -DINPUT_TOPIC");
-            if (outputTopic == null) log.error("Missing value for -DOUTPUT_TOPIC");
             System.exit(1);
+        }
+
+        if (inputTopic == null || inputTopic.isEmpty()) {
+            inputTopic = defaultInputTopic;
+        }
+
+        if (outputTopic == null || outputTopic.isEmpty()) {
+            outputTopic = defaultOutputTopic;
         }
 
         Properties config = new Properties();

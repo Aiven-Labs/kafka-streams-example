@@ -6,8 +6,9 @@ public class SetupProperties {
      */
     static void setProperties(String inputTopicName, String outputTopicName) {
         System.setProperty("KAFKA_SERVICE_URI", "dummy:1234");
-        System.setProperty("SSL_TRUSTSTORE_LOCATION", "not used");
-        System.setProperty("SSL_KEYSTORE_LOCATION", "not used");
+        System.setProperty("CA_PEM_CONTENTS", "not used");
+        System.setProperty("SERVICE_CERT_CONTENTS", "not used");
+        System.setProperty("SERVICE_KEY_CONTENTS", "not used");
         System.setProperty("PASSWORD_FOR_STORE", "not used");
         System.setProperty("SCHEMA_REGISTRY_URL", "mock://test_schema_registry");
         System.setProperty("SCHEMA_REGISTRY_PASSWORD", "not used");
