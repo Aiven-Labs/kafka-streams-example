@@ -131,6 +131,7 @@ docker run -d --name kafka-streams-container -p 3000:3000 \
         -e SCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL \
         -e SCHEMA_REGISTRY_USERNAME=$SCHEMA_REGISTRY_USERNAME \ 
         -e SCHEMA_REGISTRY_PASSWORD=$SCHEMA_REGISTRY_PASSWORD \
+        -e EXACTLY_ONCE=false \
         appimage
 ```
 
@@ -138,9 +139,10 @@ We don't actually use the port for anything at the moment.
 
 Several of those environment variable arguments have defaults, so you can 
 leave them off if you're happy with the default:
-* `SCHEMA_REGISTRY_USERNAME` - default `avnadmin`
+* `SCHEMA_REGISTRY_USERNAME` - `run.sh` defaults this to `avnadmin`
 * `INPUT_TOPIC` - the program has a default
 * `OUTPUT_TOPIC` - the program has a default
+* `EXACTLY_ONCE` - `run.sh` defaults this to `false`.
 
 ## Command line arguments for the Java app
 
@@ -164,6 +166,10 @@ match the environment variables used by the container file and `run.sh`.
 * `-DOUTPUT_TOPIC` - the output topic name. This defaults to
   `logistics_data_delivered` for the two filter programs, and 
   `logistics_data_copied` for the copy program.
+* `-DEXACTLY_ONCE` - request exactly once semantics. A value of `true`
+  requests exactly once semantics, a value of `false`, an empty string or the
+  absence of this property does not. The value is case insensitive. Any other
+  value is an error.
 
 ## The container file and how it works
 
@@ -205,6 +211,9 @@ container and the Java app itself):
   `logistics_data_gen`.
 - `OUTPUT_TOPIC` - the output topic name. **This is optional** as the Java 
   app has a sensible default.
+- `EXACTLY_ONCE` - whether exactly once semantics is wanted. **This is 
+  optional** and if it is not given, defaults to `false`. Request `true` if
+  you want exactly once semantics.
 - `APP_NAME` - the name of the application to run. **This is optional** and 
   defaults to `GenericLogApp`.
 
@@ -238,6 +247,56 @@ also need to copy the result to the top-level directory
 ```shell
 cp app/build/libs/$APP_NAME-uber.jar .
 ```
+
+### Exactly once semantics
+
+With a normal Kafka Streams application, it is possible that a message might 
+be processed once, more than once, or never at all (networks are unreliable, 
+services can crash, and so on).
+
+Exactly once semantics (EOS) in Kafka Streams guarantees that each message 
+will be processed once, no more and no less. It's been available since 2017.
+
+There is quite a lot of good documentation about exactly once semantics for 
+Kafka Streams - the following is by no means an exhaustive list.
+
+See Confluent's
+[Exactly-Once Semantics Are Possible: Here’s How Kafka Does It](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/)
+(2017/2025) for a good introduction to how this works.
+
+The Kafka Streams
+[Core Concepts](https://kafka.apache.org/41/streams/core-concepts/)
+document (this link is for Apache Kafka 4.1.x which
+is current at time of writing) is also pretty good. It talks about
+exactly once in the
+[Processing Guarantees](https://kafka.apache.org/41/streams/core-concepts/#processing-guarantees)
+section.
+
+Zeinab Dashti's
+[Developer Guide to Achieve Transactional Processing in Kafka Streams](https://medium.com/@zdb.dashti/developer-guide-to-achieve-transactional-processing-in-kafka-streams-3178e642a570)
+(2025) is good at the pragmatics, and notes that:
+
+> When `processing.guarantee=exactly_once_v2` is set, Kafka Streams 
+> automatically enforces the required producer and consumer configurations:
+> ```
+> enable.idempotence=true (on the Kafka producer)
+> isolation.level=read_committed (on the Kafka consumer)
+> ```
+> You don’t need to set these manually — doing so isn’t harmful if you match 
+> the required values, but Kafka Streams will log a warning or ignore conflicting settings.
+
+and
+
+> Any external consumer reading from Kafka output topics that are written 
+> transactionally must configure:
+> ```
+> isolation.level=read_committed
+> ```
+> Kafka Streams enforces this by default within its topology, but it must be
+> set explicitly for standalone consumers (e.g., Kafka Connect, other
+> microservices). Without it, consumers could read uncommitted or aborted records,
+> which may result in data duplication or inconsistency.
+
 
 ### Running the unit tests
 
