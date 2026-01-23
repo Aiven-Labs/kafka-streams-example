@@ -21,9 +21,16 @@ public class Config {
         return s == null || s.isBlank();
     }
 
+    private static boolean isTrueNotFalse(String s) {
+        if (s == null || s.isBlank()) return false;
+        if (s.equalsIgnoreCase("true")) return true;
+        if (s.equalsIgnoreCase("false")) return false;
+        throw (new IllegalArgumentException("Argument should be true or false, not " + s));
+    }
+
     /** Gather our `-D` command line switch values */
     public static Properties getConfig(String defaultInputTopic, String defaultOutputTopic) {
-        // We put them all into one configuration, even though they really fall into three groups
+        // We put them all into one configuration, even though they really fall into four groups
         // Kafka access
         String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI");
         String caPemContents = System.getProperty("CA_PEM_CONTENTS");
@@ -36,6 +43,8 @@ public class Config {
         // Input and output topics
         String inputTopic = System.getProperty("INPUT_TOPIC");
         String outputTopic = System.getProperty("OUTPUT_TOPIC");
+        // Behaviour.
+        String exactlyOnceString = System.getProperty("EXACTLY_ONCE");
 
         // Because we know that the system properties are being populated from shell
         // environment variables in the `run.sh` that calls us, it's possible that they
@@ -74,6 +83,18 @@ public class Config {
             log.error("Missing value for -DSCHEMA_REGISTRY_PASSWORD");
             giveUp = true;
         }
+
+        // For -DEXACTLY_ONCE, we could directly use `getBoolean` to get the System
+        // property and check if it is "true" or anything else - but I don't like the
+        // lack of error diagnostics that leads to for values like "tru" or "yes".
+        boolean exactlyOnce = false;
+        try {
+            exactlyOnce = isTrueNotFalse(exactlyOnceString);
+        } catch (IllegalArgumentException e) {
+            log.error("Unexpected value for -DEXACTLY_ONCE: " + e.toString());
+            giveUp = true;
+        }
+
         if (giveUp) {
             System.exit(1);
         }
