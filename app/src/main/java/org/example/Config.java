@@ -17,43 +17,74 @@ public class Config {
 
     private static Map<String, String> serdeConfig = new HashMap<String, String>();
 
+    private static boolean isNullOrEmpty(String s) {
+        return s == null || s.isBlank();
+    }
+
     /** Gather our `-D` command line switch values */
     public static Properties getConfig(String defaultInputTopic, String defaultOutputTopic) {
         // We put them all into one configuration, even though they really fall into three groups
+        // Kafka access
         String kafkaServiceUri = System.getProperty("KAFKA_SERVICE_URI");
         String caPemContents = System.getProperty("CA_PEM_CONTENTS");
         String serviceCertContents = System.getProperty("SERVICE_CERT_CONTENTS");
         String serviceKeyContents = System.getProperty("SERVICE_KEY_CONTENTS");
         String schemaRegistryUrl = System.getProperty("SCHEMA_REGISTRY_URL");
-        // We have a sensible default for the schema registry user, so provide it
-        String schemaRegistryUserName = System.getProperty("SCHEMA_REGISTRY_USERNAME", "avnadmin");
+        // Schema repository access
+        String schemaRegistryUserName = System.getProperty("SCHEMA_REGISTRY_USERNAME");
         String schemaRegistryPassword = System.getProperty("SCHEMA_REGISTRY_PASSWORD");
-        // We have defaults for our topic names as well
-        String inputTopic = System.getProperty("INPUT_TOPIC", defaultInputTopic);
-        String outputTopic = System.getProperty("OUTPUT_TOPIC", defaultOutputTopic);
+        // Input and output topics
+        String inputTopic = System.getProperty("INPUT_TOPIC");
+        String outputTopic = System.getProperty("OUTPUT_TOPIC");
 
-        if (kafkaServiceUri == null
-                || caPemContents == null
-                || serviceCertContents == null
-                || serviceKeyContents == null
-                || schemaRegistryUrl == null
-                || schemaRegistryUserName == null
-                || schemaRegistryPassword == null ){
-            if (kafkaServiceUri == null) log.error("Missing value for -DKAFKA_SERVICE_URI");
-            if (caPemContents == null) log.error("Missing value for -DCA_PEM_CONTENTS");
-            if (serviceCertContents == null) log.error("Missing value for -DSERVICE_CERT_CONTENTS");
-            if (serviceKeyContents == null) log.error("Missing value for -DSERVICE_KEY_CONTENTS");
-            if (schemaRegistryUrl == null) log.error("Missing value for -DSCHEMA_REGISTRY_URL");
-            if (schemaRegistryUserName == null) log.error("Missing value for -DSCHEMA_REGISTRY_USERNAME");
-            if (schemaRegistryPassword == null) log.error("Missing value for -DSCHEMA_REGISTRY_PASSWORD");
+        // Because we know that the system properties are being populated from shell
+        // environment variables in the `run.sh` that calls us, it's possible that they
+        // might be absent/unset (resulting in `null`), or the empty string (or perhaps
+        // even a string with spaces in it). We want to treat both the same way.
+        // So we shan't use the `default` argument to System.getProperty. And to be
+        // honest, since we're going to be checking for `null` values anyway, that's
+        // not a big loss.
+
+        // We could do something clever here with streams, but honestly it's simpler
+        // just to do the linearised version. And we do want an error message for each
+        // value that is absent - not just report one and then give up.
+        boolean giveUp = false;
+
+        if (isNullOrEmpty(kafkaServiceUri)) {
+            log.error("Missing value for -DKAFKA_SERVICE_URI");
+            giveUp = true;
+        }
+        if (isNullOrEmpty(caPemContents)) {
+            log.error("Missing value for -DCA_PEM_CONTENTS");
+            giveUp = true;
+        }
+        if (isNullOrEmpty(serviceCertContents)) {
+            log.error("Missing value for -DSERVICE_CERT_CONTENTS");
+            giveUp = true;
+        }
+        if (isNullOrEmpty(serviceKeyContents)) {
+            log.error("Missing value for -DSERVICE_KEY_CONTENTS");
+            giveUp = true;
+        }
+        if (isNullOrEmpty(schemaRegistryUrl)) {
+            log.error("Missing value for -DSCHEMA_REGISTRY_URL");
+            giveUp = true;
+        }
+        if (isNullOrEmpty(schemaRegistryPassword)) {
+            log.error("Missing value for -DSCHEMA_REGISTRY_PASSWORD");
+            giveUp = true;
+        }
+        if (giveUp) {
             System.exit(1);
         }
 
-        if (inputTopic == null || inputTopic.isEmpty()) {
+        if (isNullOrEmpty(schemaRegistryUserName)) {
+            schemaRegistryUserName = "avnadmin";
+        }
+        if (isNullOrEmpty(inputTopic)) {
             inputTopic = defaultInputTopic;
         }
-
-        if (outputTopic == null || outputTopic.isEmpty()) {
+        if (isNullOrEmpty(outputTopic)) {
             outputTopic = defaultOutputTopic;
         }
 
