@@ -144,6 +144,11 @@ public class Config {
         config.put("input.topic.name", inputTopic);
         config.put("output.topic.name", outputTopic);
 
+        // Exactly once semantics, if requested
+        if (exactlyOnce) {
+            config.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
+        }
+
         return config;
     }
 
