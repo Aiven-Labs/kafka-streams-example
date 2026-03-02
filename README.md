@@ -102,11 +102,11 @@ Set an environment variable to the content of each certificate file.
 >    convenience shell scripts to read the content of
 >    those files and set the environment variables:
 >    ```shell
->    source prep.sh
+>    source prep_cert_env.sh
 >    ```
 >    or for Fish
 >    ```shell
->    source prep.fish
+>    source prep_cert_env.fish
 >    ```
 
 1. To build a container image for the default `GenericLogApp`:
@@ -541,11 +541,11 @@ ca.pem  service.cert  service.key
 
 Set the environment variables for the certificate file contents
 ```shell
-source prep.sh
+source prep_env_cert.sh
 ```
 or for Fish shell
 ```shell
-source prep.fish
+source prep_env_cert.fish
 ```
 
 And now you're ready to run the program, either via `./run.sh`
