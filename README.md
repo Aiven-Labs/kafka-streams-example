@@ -541,11 +541,11 @@ ca.pem  service.cert  service.key
 
 Set the environment variables for the certificate file contents
 ```shell
-source prep_env_cert.sh
+source prep_cert_env.sh
 ```
 or for Fish shell
 ```shell
-source prep_env_cert.fish
+source prep_cert_env.fish
 ```
 
 And now you're ready to run the program, either via `./run.sh`
