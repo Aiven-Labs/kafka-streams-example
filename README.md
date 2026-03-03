@@ -13,11 +13,12 @@ If you're using an Aiven for Apache Kafka service, then the Sample data
 generator for "Logistics" will write appropriate messages to the
 `logistics_data_gen` topic.
 
-All message values are assume to be in Confluent style Avro, with the schema id
-prepended to each value (See the Confluent 
-[Wire format](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format)
-documentation for details of how this works). This means that the Serde can look
-the schema up in a schema registry, and all the apps take advantage of that.
+All message values use the [Confluent Wire
+Format](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format),
+which means the schema id is inserted before each value. This is sometimes
+also referred to as `AvroConfluent`. This means that the Serdes
+(serialize/deserialize) code can look the schema up in a schema registry, and
+all the apps take advantage of that.
 
 1. [GenericLogApp.java](app/src/main/java/org/example/GenericLogApp.java)
 
