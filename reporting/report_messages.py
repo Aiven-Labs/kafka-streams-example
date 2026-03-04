@@ -76,7 +76,7 @@ logging.propagate = False
 
 # Command line default values
 DEFAULT_CERTS_FOLDER = "certs"
-KAFKA_SERVICE_URI = os.getenv("KAFKA_SERVICE_URI")
+KAFKA_SERVICE_URL = os.getenv("KAFKA_SERVICE_URL")
 SCHEMA_REGISTRY_URL = os.getenv("SCHEMA_REGISTRY_URL")
 INPUT_TOPIC = os.getenv("INPUT_TOPIC", DEFAULT_INPUT_TOPIC_NAME)
 OUTPUT_TOPIC = os.getenv("OUTPUT_TOPIC", DEFAULT_OUTPUT_TOPIC_NAME)
@@ -374,8 +374,8 @@ class MyGridApp(App):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-k', '--kafka-uri', default=KAFKA_SERVICE_URI,
-        help='the URI for the Kafka service, defaulting to $KAFKA_SERVICE_URI'
+        '-k', '--kafka-uri', default=KAFKA_SERVICE_URL,
+        help='the URL for the Kafka service, defaulting to $KAFKA_SERVICE_URL'
         ' if that is set',
     )
     parser.add_argument(
@@ -406,8 +406,8 @@ def main():
     args = parser.parse_args()
 
     if not args.kafka_uri:
-        logging.error('The URI for the Kafka service is required')
-        logging.error('Set KAFKA_SERVICE_URI or use the -k switch')
+        logging.error('The URL for the Kafka service is required')
+        logging.error('Set KAFKA_SERVICE_URL or use the -k switch')
         return -1
 
     if not args.schema_registry_url:
@@ -416,7 +416,7 @@ def main():
         return -1
 
     logging.debug('Reading messages')
-    logging.debug(f'Kafka service URI {args.kafka_uri}')
+    logging.debug(f'Kafka service URL {args.kafka_uri}')
     logging.debug(f'Certificates in {args.certs_dir}')
     logging.debug(f'Schema registry URL {args.schema_registry_url}')
     logging.debug(f'Reading from topics {args.input_topic} and {args.output_topic}')

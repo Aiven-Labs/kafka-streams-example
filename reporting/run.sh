@@ -2,7 +2,7 @@
 
 # We're going to need the following environment variables as input
 #
-# - KAFKA_SERVICE_URI - the URI of the Kafka service we're using
+# - KAFKA_SERVICE_URL - the URL of the Kafka service we're using
 # - CA_PEM_CONTENTS - the contents of the ca.pem file
 # - SERVICE_CERT_CONTENTS - the contents of the service.cert file
 # - SERVICE_KEY_CONTENTS - the contents of the service.key file
