@@ -5,10 +5,10 @@ public class SetupProperties {
      * Set some standard test values as system properties
      */
     static void setProperties(String inputTopicName, String outputTopicName) {
-        System.setProperty("KAFKA_SERVICE_URL", "dummy:1234");
-        System.setProperty("CA_PEM_CONTENTS", "not used");
-        System.setProperty("SERVICE_CERT_CONTENTS", "not used");
-        System.setProperty("SERVICE_KEY_CONTENTS", "not used");
+        System.setProperty("KAFKA_BOOTSTRAP_SERVERS", "dummy:1234");
+        System.setProperty("KAFKA_CA_CERT", "not used");
+        System.setProperty("KAFKA_ACCESS_CERT", "not used");
+        System.setProperty("KAFKA_ACCESS_KEY", "not used");
         System.setProperty("PASSWORD_FOR_STORE", "not used");
         System.setProperty("SCHEMA_REGISTRY_URL", "mock://test_schema_registry");
         System.setProperty("SCHEMA_REGISTRY_PASSWORD", "not used");

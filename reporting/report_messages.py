@@ -76,7 +76,7 @@ logging.propagate = False
 
 # Command line default values
 DEFAULT_CERTS_FOLDER = "certs"
-KAFKA_SERVICE_URL = os.getenv("KAFKA_SERVICE_URL")
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
 SCHEMA_REGISTRY_URL = os.getenv("SCHEMA_REGISTRY_URL")
 INPUT_TOPIC = os.getenv("INPUT_TOPIC", DEFAULT_INPUT_TOPIC_NAME)
 OUTPUT_TOPIC = os.getenv("OUTPUT_TOPIC", DEFAULT_OUTPUT_TOPIC_NAME)
@@ -374,8 +374,8 @@ class MyGridApp(App):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-k', '--kafka-uri', default=KAFKA_SERVICE_URL,
-        help='the URL for the Kafka service, defaulting to $KAFKA_SERVICE_URL'
+        '-k', '--kafka-uri', default=KAFKA_BOOTSTRAP_SERVERS,
+        help='the URL for the Kafka service, defaulting to $KAFKA_BOOTSTRAP_SERVERS'
         ' if that is set',
     )
     parser.add_argument(
@@ -407,7 +407,7 @@ def main():
 
     if not args.kafka_uri:
         logging.error('The URL for the Kafka service is required')
-        logging.error('Set KAFKA_SERVICE_URL or use the -k switch')
+        logging.error('Set KAFKA_BOOTSTRAP_SERVERS or use the -k switch')
         return -1
 
     if not args.schema_registry_url:

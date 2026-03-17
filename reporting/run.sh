@@ -2,10 +2,10 @@
 
 # We're going to need the following environment variables as input
 #
-# - KAFKA_SERVICE_URL - the URL of the Kafka service we're using
-# - CA_PEM_CONTENTS - the contents of the ca.pem file
-# - SERVICE_CERT_CONTENTS - the contents of the service.cert file
-# - SERVICE_KEY_CONTENTS - the contents of the service.key file
+# - KAFKA_BOOTSTRAP_SERVERS - the URL of the Kafka service we're using
+# - KAFKA_CA_CERT - the contents of the ca.pem file
+# - KAFKA_ACCESS_CERT - the contents of the service.cert file
+# - KAFKA_ACCESS_KEY - the contents of the service.key file
 # - SCHEMA_REGISTRY_URL - the URL for the Karapace schema
 #
 # If you give values for INPUT_TOPIC and OUTPUT_TOPIC we'll use them,
@@ -40,8 +40,8 @@ normalise_cert_to_file () {
   echo "$new_string" > $3
 }
 
-normalise_cert_to_file "$CA_PEM_CONTENTS" "CERTIFICATE" certs/ca.pem
-normalise_cert_to_file "$SERVICE_CERT_CONTENTS" "CERTIFICATE" certs/service.cert
-normalise_cert_to_file "$SERVICE_KEY_CONTENTS" "PRIVATE KEY" certs/service.key
+normalise_cert_to_file "$KAFKA_CA_CERT" "CERTIFICATE" certs/ca.pem
+normalise_cert_to_file "$KAFKA_ACCESS_CERT" "CERTIFICATE" certs/service.cert
+normalise_cert_to_file "$KAFKA_ACCESS_KEY" "PRIVATE KEY" certs/service.key
 
 ./serve.py
