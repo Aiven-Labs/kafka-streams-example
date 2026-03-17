@@ -8,8 +8,6 @@ ARG APP_NAME="GenericLogApp"
 # --- First stage: Get our app, work out its dependencies, create a JRE
 FROM gradle:9.3.0-jdk25-noble AS builder
 # See https://hub.docker.com/_/gradle for available images
-# This one is built on top of
-#    eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
 
