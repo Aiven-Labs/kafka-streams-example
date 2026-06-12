@@ -6,9 +6,12 @@
 # - KAFKA_CA_CERT - the contents of the ca.pem file
 # - KAFKA_ACCESS_CERT - the contents of the service.cert file
 # - KAFKA_ACCESS_KEY - the contents of the service.key file
-# - SCHEMA_REGISTRY_URL - the URL for the Karapace schema
+# - SCHEMA_REGISTRY_HOST - the host for the Karapace schema - this must
+#   be without `https://`, it's just the host name
+# - SCHEMA_REGISTRY_PORT - the port for the Karapace schema
 # - SCHEMA_REGISTRY_PASSWORD - the password for the schema registry
 #
+export SCHEMA_REGISTRY_URL=https://${SCHEMA_REGISTRY_HOST}:${SCHEMA_REGISTRY_PORT}
 # If you give a value for SCHEMA_REGISTRY_USERNAME we'll use it, otherwise
 # we'll use the default value, which is "avnadmin"
 export SCHEMA_REGISTRY_USERNAME=${SCHEMA_REGISTRY_USERNAME:-"avnadmin"}
@@ -27,6 +30,8 @@ export EXACTLY_ONCE=${EXACTLY_ONCE:-"false"}
 export APP_NAME=${APP_NAME:-"GenericLogApp"}
 
 echo "APP_NAME is $APP_NAME"
+
+export PATH=$JAVA_HOME/bin:$PATH
 
 . ./setup_auth.sh
 

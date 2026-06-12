@@ -85,8 +85,7 @@ COPY --from=builder /app/$APP_NAME-uber.jar ./
 COPY --from=builder /app/setup_auth.sh ./
 COPY --from=builder /app/run.sh ./
 
-ENV JAVA_HOME="/usr/lib/jvm/custom-jre"
-ENV PATH="$JAVA_HOME/bin:$PATH"
+ENV JAVA_HOME=/usr/lib/jvm/custom-jre
 
 # Copy the entrypoint script and make it executable
 COPY run.sh ./
