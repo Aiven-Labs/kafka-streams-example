@@ -1,3 +1,6 @@
+# Ignore my local notes
+notes.md
+
 # Ignore Gradle project-specific cache directory
 .gradle
 
