@@ -1,0 +1,45 @@
+# This compose file is for Aiven Apps.
+# It creates a Kafka Streams application and associates it with an Aiven for Kafka service.
+# Since the user has to specify the Karapace schema registry values at deployment, it is
+# strongly recommended to create the Kafka service first, gather the Karapace connection
+# details, and then deploy this Aiven App.
+
+services:
+
+  kafka-streams-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      # Connecting to Kafka
+      # These will be filled in by Aiven Apps deployment
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      KAFKA_CA_CERT: ${KAFKA_CA_CERT}
+      KAFKA_ACCESS_CERT: ${KAFKA_ACCESS_CERT}
+      KAFKA_ACCESS_KEY: ${KAFKA_ACCESS_KEY}
+      # Connecting to the Karapace schema repository
+      # You will need to specify these after the Kafka service is running,
+      # as Aiven automatically provides a Karapace schema registry for each
+      # Aiven for Apache Kafka service
+      SCHEMA_REGISTRY_HOST: ${SCHEMA_REGISTRY_HOST}
+      SCHEMA_REGISTRY_PORT: ${SCHEMA_REGISTRY_PORT}
+      SCHEMA_REGISTRY_USERNAME: ${SCHEMA_REGISTRY_USERNAME}
+      SCHEMA_REGISTRY_PASSWORD: ${SCHEMA_REGISTRY_PASSWORD}
+      # Which topics are input and output
+      # If unset, the Java application will use default values
+      # Note: the Kafka Streams app requires the input and output (if used)
+      # topics to exist before it runs
+      INPUT_TOPIC: ${INPUT_TOPIC:-}
+      OUTPUT_TOPIC: ${OUTPUT_TOPIC:-}
+    depends_on:
+      - kafka-streams-kafka-service
+
+  # Our Aiven for Kafka service
+  # Aiven Apps deployment will sort out the values for the environment variables
+  kafka-streams-kafka-service:
+   image: apache/kafka
+   environment:
+     KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+     KAFKA_CA_CERT: ${KAFKA_CA_CERT}
+     KAFKA_ACCESS_CERT: ${KAFKA_ACCESS_CERT}
+     KAFKA_ACCESS_KEY: ${KAFKA_ACCESS_KEY}
