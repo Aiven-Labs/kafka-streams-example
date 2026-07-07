@@ -439,8 +439,11 @@ Create the Aiven for Kafka service. We'll show how to create a free or paid
 service. There are notes about each command after the command.
 
 1. For trying out this app, a
-   [free Aiven for Kafka service](https://aiven.io/free-kafka)
-   will work just fine. Create the service using the following command:
+   [free ](https://aiven.io/free-kafka) or
+   [developer tier](https://aiven.io/developer-tier-kafka) Aiven for Kafka 
+   service will work just fine.
+
+   Create the a free tier service using the following command:
    ```shell
    avn service create $KAFKA_SERVICE_NAME          \
            --service-type kafka                    \
@@ -451,20 +454,24 @@ service. There are notes about each command after the command.
    ```
 
    > **Notes**
-   > 1. The details of how the free cloud and plan are specified at the command 
-   >    line may change. This is one case where it's actually simpler to do this
-   >    in the Aiven web console, as there you just choose the free 
-   >    Kafka tier and then what part of the world you want.
-   > 2. `-c schema_registry=true` says we want to enable the Karapace schema
+   > -  The details of how the free and developer tier cloud and plan are 
+   >    specified at the command line may change. This is one case where it's 
+   >    actually simpler to use the Aiven web console, as there you just choose
+   >    the Kafka tier and then what part of the world you want.
+   > 
+   >    Alternatively, use the [Aiven MCP](https://aiven.io/mcp) and ask for 
+   >    what you want.
+   > -  `-c schema_registry=true` says we want to enable the Karapace schema
    >    registry. This is also free, and we need it to handle Avro messages.
-   > 3. `-c kafka.auto_create_topics_enable=true` says we want producers to
+   > -  `-c kafka.auto_create_topics_enable=true` says we want producers to
    >    be able to create topics. You don't want this in production, but it's
    >    often a good idea in development, and it means the output topics will
    >    get created as we need them.
 
-2. If you prefer (or if you're already using your free Aiven for Kafka service 
+2. If you prefer (maybe you're already using your free Aiven for Kafka service 
    for something else and don't want to add new topics to it), you can instead 
-   create a paid service. For that, use a command like the following:
+   create a Professional tier (paid) service. For that, use a command like the 
+   following:
    ```shell
    avn service create $KAFKA_SERVICE_NAME          \
            --service-type kafka                    \
@@ -476,13 +483,13 @@ service. There are notes about each command after the command.
    ```
 
    > **Notes**
-   > 1. Choose a cloud and plan that match your needs. There's no need to go 
+   > -  Choose a cloud and plan that match your needs. There's no need to go 
    >    for anything above the minimum plan (`startup-4` in this case).
-   > 2. In the case of this cloud and region, I knew there was a VPC 
+   > -  In the case of this cloud and region, I knew there was a VPC 
    >    (virtual private cloud) available to my organization, so I needed
    >    to tell the command I did not want to use it. It doesn't hurt to
    >    specify th
-   > 3. The last two switches are the same as in the free example above.
+   > -  The last two switches are the same as in the free example above.
 
 While that's running, get the service URL for the new service
 ``` shell
@@ -578,3 +585,64 @@ source prep_cert_env.fish
 
 And now you're ready to run the program, either via `./run.sh`
 or via Docker.
+
+## Deploying as an Aiven App
+
+> **Note:** At the moment (July 2026) Aiven Apps is in Limited Availability 
+> (LA). See [Aiven Apps](https://aiven.io/apps) for more information and
+> to request access.
+
+### Create a fork that does what you want
+
+Fork the repository and create a branch to work on.
+
+Edit the `Dockerfile` to set which Kafka Streams app you want to run, 
+`GenericLogApp`, `GenericCopyApp`, `GenericFilterApp` or `SpecificFilterApp`,
+by changing the line
+```docker
+ARG APP_NAME=GenericLogApp
+```
+
+If you want to alter what the Java code does, this is the time to do that as 
+well.
+
+If you're working on a local clone of the repository, remember to push to the
+upstream, so that Aiven Apps will be able to see your changes.
+
+### Create an Aiven for Kafka service
+
+This can be done using the Aiven console, or with the command line, as 
+explained in the previous section. 
+
+Create the input and output topics, again as described in the previous section.
+
+### Deploy to Aiven Apps
+
+The following is a summary - check the documentation for the most up-to-date
+information.
+
+1. Connect your GitHub account to your Aiven organization.
+2. In the [Aiven Console](https://console.aiven.io/) go to your project and
+   click **Applications**.
+3. Click **Deploy app**.
+4. Select your **Account**, your forked repository, and the appropriate branch.
+5. Click **Next**.
+6. Select the manifest file `compose.aiven.yaml` and click **Scan**.
+7. On the card for the Kafka service, click the paired arrows icon, and 
+   choose the Kafka service you created earlier.
+8. On the card for the Kafka Streams service, clock the pen icon to edit its 
+   configuration.
+
+   - Check that the name is recognisable, and edit it if necessary.
+   - Set the input and output topic names.
+   - Copy the `SCHEMA_` values from the **Schema registry** tab on the Kafka 
+     Service **Overview** page (in the Aiven web console). For the password, 
+     use the toggle switch to make it a secret.
+   - Do not change the values for `APP_NAME`, `FAT_JAR_NAME` or `JAVA_HOME`.
+
+9. To deploy the app services, click **Deploy**.
+
+The Kafka Streams app will start to build. See its progress in the **Build 
+logs** tab. It will connect to the Kafka service when it runs, and you can 
+then see its progress in the **Runtime logs** tab.
+
