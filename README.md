@@ -643,7 +643,7 @@ information.
    - Copy the `SCHEMA_` values from the **Schema registry** tab on the Kafka 
      Service **Overview** page (in the Aiven web console). For the password, 
      use the toggle switch to make it a secret.
-   - Do not change the values for `APP_NAME`, `FAT_JAR_NAME` or `JAVA_HOME`.
+   - Do not change the values for `FAT_JAR_NAME` or `JAVA_HOME`.
 
 9. To deploy the app services, click **Deploy**.
 
