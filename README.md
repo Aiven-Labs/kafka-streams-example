@@ -603,6 +603,10 @@ by changing the line
 ARG APP_NAME=GenericLogApp
 ```
 
+> Make a note of the value specified for `APP_NAME` - you will need it when
+> you are setting up the configuration for the App service when deploying to 
+> Aiven Apps, below.
+
 If you want to alter what the Java code does, this is the time to do that as 
 well.
 
@@ -630,10 +634,11 @@ information.
 6. Select the manifest file `compose.aiven.yaml` and click **Scan**.
 7. On the card for the Kafka service, click the paired arrows icon, and 
    choose the Kafka service you created earlier.
-8. On the card for the Kafka Streams service, clock the pen icon to edit its 
+8. On the card for the Kafka Streams service, click the pen icon to edit its 
    configuration.
 
    - Check that the name is recognisable, and edit it if necessary.
+   - Set the value for `APP_NAME` to the same value as in the `Dockerfile` 
    - Set the input and output topic names.
    - Copy the `SCHEMA_` values from the **Schema registry** tab on the Kafka 
      Service **Overview** page (in the Aiven web console). For the password, 
@@ -645,4 +650,8 @@ information.
 The Kafka Streams app will start to build. See its progress in the **Build 
 logs** tab. It will connect to the Kafka service when it runs, and you can 
 then see its progress in the **Runtime logs** tab.
+
+> **Note** setting the value of `APP_NAME` for the Kafka Streams service is 
+> necessary with the current (2026-07) version of Aiven Apps, which does not
+> process or allow setting container file `ARGS` values.
 
