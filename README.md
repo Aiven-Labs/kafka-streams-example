@@ -586,6 +586,25 @@ source prep_cert_env.fish
 And now you're ready to run the program, either via `./run.sh`
 or via Docker.
 
+## Deploying with `compose.specific.yaml`
+
+If all of the environment variables described above have been set, then
+the compose file `compose.specific.yaml` can be used to deploy the Kafka 
+Streams service. This works well when using an Aiven for Apache Kafka 
+service, as described in the previous section.
+
+```shell
+docker compose -f compose.specific.yaml up
+```
+
+Also, if you specify the `APP_NAME` environent variable, you can override 
+the application name set using `ARG` at the top of the `Dockerfile`:
+
+```shell
+APP_NAME=GenericFilterApp docker compose -f compose.specific.yaml up
+```
+
+
 ## Deploying as an Aiven App
 
 > **Note:** At the moment (July 2026) Aiven Apps is in Limited Availability 
@@ -654,4 +673,7 @@ then see its progress in the **Runtime logs** tab.
 > **Note** setting the value of `APP_NAME` for the Kafka Streams service is 
 > necessary with the current (2026-07) version of Aiven Apps, which does not
 > process or allow setting container file `ARGS` values.
-
+> 
+> This is only really a problem because the Dockerfile has been designed to 
+> support multiple applications - if it was for just (for instance) 
+> GenericFilterApp, the issue would not arise.

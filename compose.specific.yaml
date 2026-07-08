@@ -1,0 +1,33 @@
+# If all of the environment variables described in the README are set up,
+# then this compose file can be used to deploy a service.
+# You can alter the service name by setting the environment variable APP_NAME.
+
+services:
+
+  kafka-streams-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Which Kafka Streams app to run
+        # The GenericLogApp will run on any topic and just log the events
+        APP_NAME: ${APP_NAME:-GenericLogApp}
+    environment:
+      # Connecting to Kafka
+      # These will be filled in by Aiven Apps deployment
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      KAFKA_CA_CERT: ${KAFKA_CA_CERT}
+      KAFKA_ACCESS_CERT: ${KAFKA_ACCESS_CERT}
+      KAFKA_ACCESS_KEY: ${KAFKA_ACCESS_KEY}
+      # Connecting to the Karapace schema repository
+      # You will need to specify these after the Kafka service is running,
+      # as Aiven automatically provides a Karapace schema registry for each
+      # Aiven for Apache Kafka service
+      SCHEMA_REGISTRY_HOST: ${SCHEMA_REGISTRY_HOST}
+      SCHEMA_REGISTRY_PORT: ${SCHEMA_REGISTRY_PORT}
+      SCHEMA_REGISTRY_USERNAME: ${SCHEMA_REGISTRY_USERNAME}
+      SCHEMA_REGISTRY_PASSWORD: ${SCHEMA_REGISTRY_PASSWORD}
+      # Which topics are input and output
+      # If unset, the Java application will use default values
+      INPUT_TOPIC: ${INPUT_TOPIC:-}
+      OUTPUT_TOPIC: ${OUTPUT_TOPIC:-}
