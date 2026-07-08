@@ -85,12 +85,10 @@ COPY --from=builder /app/$APP_NAME-uber.jar ./
 COPY --from=builder /app/setup_auth.sh ./
 COPY --from=builder /app/run.sh ./
 
-ENV JAVA_HOME=/usr/lib/jvm/custom-jre
-
-# Copy the entrypoint script and make it executable
-COPY run.sh ./
 RUN chmod +x ./run.sh
 RUN chmod +x ./setup_auth.sh
+
+ENV JAVA_HOME=/usr/lib/jvm/custom-jre
 
 # Set the custom entrypoint
 CMD [ "./run.sh" ]
