@@ -29,5 +29,7 @@ services:
       SCHEMA_REGISTRY_PASSWORD: ${SCHEMA_REGISTRY_PASSWORD}
       # Which topics are input and output
       # If unset, the Java application will use default values
+      # Note: the Kafka Streams app requires the input and output (if used)
+      # topics to exist before it runs
       INPUT_TOPIC: ${INPUT_TOPIC:-}
       OUTPUT_TOPIC: ${OUTPUT_TOPIC:-}
