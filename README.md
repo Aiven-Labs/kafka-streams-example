@@ -641,28 +641,38 @@ Create the input and output topics, again as described in the previous section.
 
 ### Deploy to Aiven Apps
 
-The following is a summary - check the documentation for the most up-to-date
-information.
+The following is a summary - check
+[the documentation](https://aiven.io/docs/products/apps/deploy-apps)
+for the most up-to-date  information.
 
-1. Connect your GitHub account to your Aiven organization.
-2. In the [Aiven Console](https://console.aiven.io/) go to your project and
+1. In the [Aiven Console](https://console.aiven.io/) go to your project and
    click **Applications**.
-3. Click **Deploy app**.
+2. Click **Deploy app**.
+3. If you haven’t already done so, use **Connect another account** to connect 
+   your GitHub account to your Aiven organization.
 4. Select your **Account**, your forked repository, and the appropriate branch.
 5. Click **Next**.
 6. Select the manifest file `compose.aiven.yaml` and click **Scan**.
-7. On the card for the Kafka service, click the paired arrows icon, and 
-   choose the Kafka service you created earlier.
-8. On the card for the Kafka Streams service, click the pen icon to edit its 
-   configuration.
+7. On the card for the Kafka service, click the paired arrows icon
+   ![paired arrows](images/paired-arrows-icon.png), and choose the Kafka
+   service you created earlier.
+8. On the card for the Kafka Streams service, click the pen icon
+   ![pen icon](images/pen-icon.png) to edit its configuration.
 
-   - Check that the name is recognisable, and edit it if necessary.
-   - Set the value for `APP_NAME` to the same value as in the `Dockerfile` 
-   - Set the input and output topic names.
-   - Copy the `SCHEMA_` values from the **Schema registry** tab on the Kafka 
-     Service **Overview** page (in the Aiven web console). For the password, 
-     use the toggle switch to make it a secret.
-   - Do not change the values for `FAT_JAR_NAME` or `JAVA_HOME`.
+    - Check that the application **Name** is recognisable, and edit it if
+      necessary. The aim is to have a name that you’ll recognise and be able
+      to find later.
+    - In the **Environment variables** section:
+        - Set the value for `APP_NAME` to the same value 
+          you set in the `Dockerfile` above (the appropriate one of 
+          `GenericLogApp`, `GenericCopyApp`, 
+          `GenericFilterApp` or `SpecificFilterApp`).
+        - Set the `INPUT_TOPIC` name to `logistics_data_gen`
+        - Set the `OUTPUT_TOPIC` name to `""` (for `GenericLogApp`), `logistics_data_copied` (for `GenericCopyApp`) or `logistics_data_delivered` (for either `FilterApp`).
+        - Copy the `SCHEMA_` values from the **Schema registry** tab on the 
+          Kafka Service **Overview** page (in the Aiven web console). For 
+          the password, use the toggle switch to make it a secret.
+        - Do not change the values for `FAT_JAR_NAME` or `JAVA_HOME`.
 
 9. To deploy the app services, click **Deploy**.
 
