@@ -687,3 +687,13 @@ then see its progress in the **Runtime logs** tab.
 > This is only really a problem because the Dockerfile has been designed to 
 > support multiple applications - if it was for just (for instance) 
 > GenericFilterApp, the issue would not arise.
+
+> If the application **Runtime logs** report a failure because it can’t
+> find the “uber” JAR file, for instance
+>
+> ```bash
+> Error: Unable to access jarfile ./GenericCopyApp-uber.jar
+> ```
+>
+> then that probably means you didn’t set `APP_NAME` to the same value as it 
+> has in the `Dockerfile`.
